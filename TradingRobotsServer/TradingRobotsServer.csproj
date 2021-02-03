@@ -82,7 +82,15 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Page Include="View\MainWindow.xaml">
+    <Compile Include="Models\Strategy\SetPositionByCandleHighLowStrategy.cs" />
+    <Compile Include="Models\Structures\Enums.cs" />
+    <Compile Include="Models\Structures\StockData.cs" />
+    <Compile Include="Models\Support\ManagementOfRisks.cs" />
+    <Compile Include="ViewModels\QuikConnectingWindowViewModel.cs" />
+    <Compile Include="View\QuikConnectingWindow.xaml.cs">
+      <DependentUpon>QuikConnectingWindow.xaml</DependentUpon>
+    </Compile>
+    <Page Include="View\RobotPanel.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -94,14 +102,18 @@
     <Compile Include="Infrastracture\RelayCommand.cs" />
     <Compile Include="Models\QuikConnector\QuikConnect.cs" />
     <Compile Include="Models\QuikConnector\Tool.cs" />
-    <Compile Include="Models\Structures\Candles.cs" />
+    <Compile Include="Models\Structures\Candle.cs" />
     <Compile Include="Models\Structures\Tools.cs" />
     <Compile Include="ViewModels\Base\ViewModel.cs" />
-    <Compile Include="ViewModels\MainWindowViewModel.cs" />
-    <Compile Include="View\MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
+    <Compile Include="ViewModels\RobotPanelViewModel.cs" />
+    <Compile Include="View\RobotPanel.xaml.cs">
+      <DependentUpon>RobotPanel.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="View\QuikConnectingWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -147,8 +159,6 @@
     <Content Include="lua\clibs\5.1_MD\socket\core.dll" />
     <Content Include="lua\clibs\5.1_MT\socket\core.dll" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Models\Strategy\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

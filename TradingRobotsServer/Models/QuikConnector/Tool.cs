@@ -12,6 +12,9 @@ namespace TradingRobotsServer.Models.QuikConnector
 
         //string clientCode;
 
+        private int id_tool;
+        public int IDTool => id_tool;
+
         private string name;
         /// <summary>
         /// Краткое наименование инструмента (бумаги)
@@ -115,9 +118,10 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// <param name="securityCode">Код инструмента</param>
         /// <param name="classCode">Код класса</param>
         /// <param name="koefSlip">Коэффициент проскальзывания</param>
-        public Tool(ref Quik quik, string securityCode, string classCode, CandleInterval candle_interval)
+        public Tool(ref Quik quik, int id, string securityCode, string classCode, CandleInterval candle_interval)
         {
             this.quik = quik;
+            id_tool = id;
             interval = candle_interval;
             candles = new List<Candle>();
             GetBaseParam(securityCode, classCode);

@@ -10,10 +10,11 @@ using System.Windows.Input;
 using TestQuotes.Infrastructure.Commands;
 using TestQuotes.ViewModels.Base;
 using TradingRobotsServer.Models.QuikConnector;
+using TradingRobotsServer.Models.Strategy;
 
 namespace TradingRobotsServer.ViewModels
 {
-    public class MainWindowViewModel : ViewModel
+    public class RobotPanelViewModel : ViewModel
     {
         #region
 
@@ -38,15 +39,28 @@ namespace TradingRobotsServer.ViewModels
                 OnPropertyChanged("Log");
             }
         }
+
+        private decimal sale_price;
+        public decimal SalePrice
+        {
+            get => sale_price;
+            set
+            {
+                sale_price = value;
+                OnPropertyChanged("SalePrice");
+            }
+        }
+
         #endregion
 
         #region
 
-        public ICommand Button { get; }
-
-        public MainWindowViewModel()
+        public ICommand Button1 { get; }
+        public ICommand Button2 { get; }
+        public RobotPanelViewModel()
         {
-            Button = new RelayCommand(On_Button_Execute, Can_Button_Execute);
+            Button1 = new RelayCommand(On_Button_Execute, Can_Button_Execute);
+            Button2 = new RelayCommand(On_Button2_Execute, Can_Button2_Execute);
         }
 
         #endregion
@@ -62,6 +76,10 @@ namespace TradingRobotsServer.ViewModels
         bool check_subscribe_orderbook;
         bool check_subscribe_futures_client_holding;
         bool check_subscribe_depo_limit;
+        bool check_subscribe_stoplimit;
+
+        SetPositionByCandleHighLowStrategy strategy;
+
         #endregion
 
         #region
@@ -75,7 +93,10 @@ namespace TradingRobotsServer.ViewModels
             quik_connect = new QuikConnect(this);
             check_quik_connecting = quik_connect.QuikConnecting(Quik.DefaultPort, Quik.DefaultHost);
             if (check_quik_connecting)
-                check_tool_connecting = quik_connect.ToolConnecting("RIH1", QuikSharp.DataStructures.CandleInterval.M1);
+            {
+                check_tool_connecting = quik_connect.ToolConnecting("SBER", QuikSharp.DataStructures.CandleInterval.M1);
+                //check_tool_connecting = quik_connect.ToolConnecting("GAZP", QuikSharp.DataStructures.CandleInterval.M1);
+            }
 
             if (check_tool_connecting)
             {
@@ -83,13 +104,17 @@ namespace TradingRobotsServer.ViewModels
                 check_subscribe_orderbook = quik_connect.SubscribeOrderBook(0);
                 check_subscribe_futures_client_holding = quik_connect.SubscribeOnFuturesClientHolding();
                 check_subscribe_depo_limit = quik_connect.SubscribeOnDepoLimit();
+                check_subscribe_stoplimit = quik_connect.SubscribeOnStopOrder();
 
-                if (check_subscribe_candles && check_subscribe_orderbook && check_subscribe_futures_client_holding && check_subscribe_depo_limit)
+                if (check_subscribe_candles && check_subscribe_orderbook && check_subscribe_futures_client_holding 
+                    && check_subscribe_depo_limit && check_subscribe_stoplimit)
                 {
                     thread = new Thread(new ThreadStart(StartTimer));
                     thread.Start();
                 }
             }
+
+            strategy = new SetPositionByCandleHighLowStrategy(15, 5, 0.3m, new TimeSpan(10, 39, 0), quik_connect.Tools[0]);
         }
 
         private void StartTimer()
@@ -104,6 +129,17 @@ namespace TradingRobotsServer.ViewModels
         {
             LastPrice = quik_connect.Tools[0].LastPrice;
         }
+
+        private bool Can_Button2_Execute(object obj)
+        {
+            return true;
+        }
+
+        private void On_Button2_Execute(object obj)
+        {
+
+        }
+
 
         #endregion
     }

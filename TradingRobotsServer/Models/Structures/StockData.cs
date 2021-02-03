@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace TradingRobotsServer.Models.Structures
 {
-    class Candles
+    public class StockData
     {
+        public virtual int ID { get; set; }
+        public DateTime DateTime { get; set; }
+        public int Vol { get; set; }
     }
 }
