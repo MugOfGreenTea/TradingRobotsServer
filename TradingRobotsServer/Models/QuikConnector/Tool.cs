@@ -1,9 +1,7 @@
 ﻿using QuikSharp;
+using QuikSharp.DataStructures;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TradingRobotsServer.Models.QuikConnector
 {
@@ -11,63 +9,71 @@ namespace TradingRobotsServer.Models.QuikConnector
     {
         private Char separator = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator[0];
         private Quik quik;
-        private string name;
-        private string securityCode;
-        private string classCode;
 
         //string clientCode;
-        private string accountID;
-        private string firmID;
-        private int lot;
-        private int priceAccuracy;
-        private double guaranteeProviding;
-        private decimal priceStep;
-        private decimal step;
-        private decimal lastPrice;
 
-        #region Свойства
+        private string name;
         /// <summary>
         /// Краткое наименование инструмента (бумаги)
         /// </summary>
-        public string Name { get { return name; } }
+        public string Name => name;
+
+        private string securityCode;
         /// <summary>
         /// Код инструмента (бумаги)
         /// </summary>
-        public string SecurityCode { get { return securityCode; } }
+        public string SecurityCode => securityCode;
+
+        private string classCode;
         /// <summary>
         /// Код класса инструмента (бумаги)
         /// </summary>
-        public string ClassCode { get { return classCode; } }
+        public string ClassCode => classCode;
+
+        private string accountID;
         /// <summary>
         /// Счет клиента
         /// </summary>
-        public string AccountID { get { return accountID; } }
+        public string AccountID => accountID;
+
+        private string firmID;
         /// <summary>
         /// Код фирмы
         /// </summary>
-        public string FirmID { get { return firmID; } }
+        public string FirmID => firmID;
+
+        private int lot;
         /// <summary>
         /// Количество акций в одном лоте
         /// Для инструментов класса SPBFUT = 1
         /// </summary>
-        public int Lot { get { return lot; } }
+        public int Lot => lot;
+
+        private int priceAccuracy;
         /// <summary>
         /// Точность цены (количество знаков после запятой)
         /// </summary>
-        public int PriceAccuracy { get { return priceAccuracy; } }
+        public int PriceAccuracy => priceAccuracy;
+
+        private decimal step;
         /// <summary>
         /// Шаг цены
         /// </summary>
-        public decimal Step { get { return step; } }
+        public decimal Step => step;
+
+        private double guaranteeProviding;
         /// <summary>
-        /// Гарантийное обеспечение (только для срочного рынка)
-        /// для фондовой секции = 0
+        /// Гарантийное обеспечение (только для срочного рынка) для фондовой секции = 0
         /// </summary>
-        public double GuaranteeProviding { get { return guaranteeProviding; } }
+        public double GuaranteeProviding => guaranteeProviding;
+
+        private decimal priceStep;
         /// <summary>
         /// Стоимость шага цены
         /// </summary>
-        public decimal PriceStep { get { return priceStep; } }
+        public decimal PriceStep => priceStep;
+
+        private decimal lastPrice;
         /// <summary>
         /// Цена последней сделки
         /// </summary>
@@ -79,7 +85,28 @@ namespace TradingRobotsServer.Models.QuikConnector
                 return lastPrice;
             }
         }
-        #endregion
+
+        private CandleInterval interval;
+        /// <summary>
+        /// Интервал инструмента.
+        /// </summary>
+        public CandleInterval Interval => interval;
+
+        private List<Candle> candles;
+        /// <summary>
+        /// Список котировок.
+        /// </summary>
+        public List<Candle> Candles => candles;
+
+        public bool ToolCreated = false;
+        public bool isSubscribedToolOrderBook = false;
+        public bool isSubscribedToolCandles = false;
+
+        public Tool(ref Quik quik)
+        {
+            this.quik = quik;
+            candles = new List<Candle>();
+        }
 
         /// <summary>
         /// Конструктор класса
@@ -88,13 +115,15 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// <param name="securityCode">Код инструмента</param>
         /// <param name="classCode">Код класса</param>
         /// <param name="koefSlip">Коэффициент проскальзывания</param>
-        public Tool(ref Quik quik, string securityCode, string classCode)
+        public Tool(ref Quik quik, string securityCode, string classCode, CandleInterval candle_interval)
         {
             this.quik = quik;
-            GetBaseParam(quik, securityCode, classCode);
+            interval = candle_interval;
+            candles = new List<Candle>();
+            GetBaseParam(securityCode, classCode);
         }
 
-        private void GetBaseParam(Quik quik, string secCode, string class_code)
+        private void GetBaseParam(string secCode, string class_code)
         {
             try
             {
@@ -138,7 +167,9 @@ namespace TradingRobotsServer.Models.QuikConnector
                             Console.WriteLine("Instrument.GetBaseParam. Ошибка получения priceStep для " + securityCode + ": " + e.Message);
                             priceStep = 0;
                         }
-                        if (priceStep == 0) priceStep = step;
+                        if (priceStep == 0) 
+                            priceStep = step;
+                        ToolCreated = true;
                     }
                     else
                     {
@@ -160,6 +191,11 @@ namespace TradingRobotsServer.Models.QuikConnector
             {
                 Console.WriteLine("Ошибка в методе GetBaseParam: " + e.Message);
             }
+        }
+
+        public void AddNewCandle(Candle candle)
+        {
+            candles.Add(candle);
         }
     }
 }

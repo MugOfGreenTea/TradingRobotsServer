@@ -11,7 +11,11 @@
         <vm:MainWindowViewModel/>
     </Window.DataContext>
     <Grid>
-        <Menu HorizontalAlignment="Left" Height="23" VerticalAlignment="Top" Width="1669">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="289*"/>
+            <ColumnDefinition Width="1380*"/>
+        </Grid.ColumnDefinitions>
+        <Menu HorizontalAlignment="Left" Height="23" VerticalAlignment="Top" Width="1669" Grid.ColumnSpan="2">
             <MenuItem Header="File">
                 <MenuItem Header="New Project" ></MenuItem>
                 <MenuItem Header="Настройки" >
@@ -24,7 +28,7 @@
             <MenuItem Header="Edit" ></MenuItem>
             <MenuItem Header="View" ></MenuItem>
         </Menu>
-        <TabControl Margin="0,28,10,10" HorizontalAlignment="Right" Width="1375">
+        <TabControl Margin="10,28,10,10" Grid.Column="1">
             <TabItem Header="TabItem">
                 <Grid Background="#FFE5E5E5"/>
             </TabItem>
@@ -32,7 +36,12 @@
                 <Grid Background="#FFE5E5E5"/>
             </TabItem>
         </TabControl>
-        <StackPanel HorizontalAlignment="Left" Margin="10,28,0,10" Width="269"/>
+        <StackPanel Margin="10,28,0,10" HorizontalAlignment="Left" Width="269">
+            <Label Content="Label"/>
+            <TextBox Height="23" TextWrapping="Wrap" Text="{Binding LastPrice, Mode=OneWay}" Margin="0,0,47,0"/>
+            <Button Content="Button" Command="{Binding Button}"/>
+            <TextBox Height="292" TextWrapping="Wrap" Text="{Binding Log, Mode=OneWay}"/>
+        </StackPanel>
 
     </Grid>
 </Window>
