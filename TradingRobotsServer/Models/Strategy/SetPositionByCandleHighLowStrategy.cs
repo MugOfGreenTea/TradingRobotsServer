@@ -16,29 +16,56 @@ namespace TradingRobotsServer.Models.Strategy
         public int Window { get; set; }
         public int CandlesViewed { get; set; }
         decimal Indent { get; set; }
+        public List<Candle> Candles { get; set; }
         public List<(Candle, Extremum)> Extremums { get; set; }
         public TimeSpan NotTradingTime { get; set; } /* = new TimeSpan(10, 39, 0)*/
         public Operation Operation { get; set; }
 
-        public Tool Tool { get; set; }
+        public delegate void OnNewCandle(Candle candle);
+        public event OnNewCandle NewCandle;
+        public delegate void OnNewTick(decimal last_price);
+        public event OnNewTick NewTick;
 
-        public SetPositionByCandleHighLowStrategy(int window, int candles_viewed,  decimal indent, TimeSpan not_trading_time, Tool tool)
+        public unsafe SetPositionByCandleHighLowStrategy(int window, int candles_viewed,  decimal indent, TimeSpan not_trading_time)
         {
             Window = window;
             CandlesViewed = candles_viewed;
             Indent = indent;
             NotTradingTime = not_trading_time;
-            Tool = tool;
 
             InitialIndicators();
+
+            NewCandle += AnalysisCandle;
+            NewTick += AnalysisTick;
         }
 
-        public void InitialIndicators()
+        private void InitialIndicators()
         {
+            Candles = new List<Candle>();
             Extremums = new List<(Candle, Extremum)>();
         }
 
-        public void FindExtremums()
+        private void AnalysisCandle(Candle candle)
+        {
+            if (Candles.Count != 0)
+                Candles.RemoveAt(0);
+            Candles.Add(candle);
+
+            FindExtremums();
+            CreateDeal();
+        }
+
+        private void FindExtremums()
+        {
+
+        }
+
+        private void CreateDeal()
+        {
+
+        }
+
+        public void AnalysisTick(decimal last_price)
         {
 
         }

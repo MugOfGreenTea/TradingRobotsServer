@@ -16,7 +16,7 @@ namespace TradingRobotsServer.Models.QuikConnector
     public class QuikConnect
     {
         public Quik quik;
-        public Tools Tools;
+        //public Tools Tools;
         private string clientCode;
 
         private RobotPanelViewModel mainWindow;
@@ -24,7 +24,7 @@ namespace TradingRobotsServer.Models.QuikConnector
         public QuikConnect(RobotPanelViewModel mainWindowViewModel)
         {
             mainWindow = mainWindowViewModel;
-            Tools = new Tools();
+            //Tools = new Tools();
         }
 
         #region Подключения
@@ -83,7 +83,47 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// </summary>
         /// <param name="name_tool"></param>
         /// <returns></returns>
-        public bool ToolConnecting(string name_tool, CandleInterval interval)
+        //public bool ToolConnecting(string name_tool, CandleInterval interval)
+        //{
+        //    string classCode;
+        //    try
+        //    {
+        //        DebugLog("Определяем код класса инструмента " + name_tool + ", по списку классов" + "...");
+        //        try
+        //        {
+        //            classCode = quik.Class.GetSecurityClass("SPBFUT,TQBR,TQBS,TQNL,TQLV,TQNE,TQOB,QJSIM", name_tool).Result;
+        //        }
+        //        catch
+        //        {
+        //            DebugLog("Ошибка определения класса инструмента. Убедитесь, что тикер указан правильно");
+        //            return false;
+        //        }
+        //        if (classCode != null && classCode != "")
+        //        {
+        //            DebugLog("Определяем код клиента...");
+        //            clientCode = quik.Class.GetClientCode().Result;
+
+        //            DebugLog("Создаем экземпляр инструмента " + name_tool + "|" + classCode + "...");
+        //            Tools.Add(new Tool(ref quik, Tools.Count, name_tool, classCode, interval));
+
+        //            if (Tools.Last() != null && Tools.Last().Name != null && Tools.Last().Name != "" && Tools.Last().SecurityCode == name_tool && Tools.Last().ClassCode == classCode)
+        //            {
+        //                DebugLog("Инструмент " + Tools.Last().Name + " создан.");
+
+        //                return true;
+        //            }
+        //            return false;
+        //        }
+        //    }
+        //    catch
+        //    {
+        //        DebugLog("Ошибка получения данных по инструменту.");
+        //        return false;
+        //    }
+        //    return false;
+        //}
+
+        public Tool ToolConnectingReturn(string name_tool, CandleInterval interval)
         {
             string classCode;
             try
@@ -96,7 +136,7 @@ namespace TradingRobotsServer.Models.QuikConnector
                 catch
                 {
                     DebugLog("Ошибка определения класса инструмента. Убедитесь, что тикер указан правильно");
-                    return false;
+                    return null;
                 }
                 if (classCode != null && classCode != "")
                 {
@@ -104,23 +144,24 @@ namespace TradingRobotsServer.Models.QuikConnector
                     clientCode = quik.Class.GetClientCode().Result;
 
                     DebugLog("Создаем экземпляр инструмента " + name_tool + "|" + classCode + "...");
-                    Tools.Add(new Tool(ref quik, Tools.Count, name_tool, classCode, interval));
 
-                    if (Tools.Last() != null && Tools.Last().Name != null && Tools.Last().Name != "" && Tools.Last().SecurityCode == name_tool && Tools.Last().ClassCode == classCode)
+                    Tool tool = new Tool(ref quik, 0, name_tool, classCode, interval);///////////
+
+                    if (tool != null && tool.Name != null && tool.Name != "" && tool.SecurityCode == name_tool && tool.ClassCode == classCode)
                     {
-                        DebugLog("Инструмент " + Tools.Last().Name + " создан.");
+                        DebugLog("Инструмент " + tool.Name + " создан.");
 
-                        return true;
+                        return tool;
                     }
-                    return false;
+                    return null;
                 }
             }
             catch
             {
                 DebugLog("Ошибка получения данных по инструменту.");
-                return false;
+                return null;
             }
-            return false;
+            return null;
         }
 
         #endregion
@@ -149,7 +190,7 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// <summary>
         /// Подписка на стакан.
         /// </summary>
-        public bool SubscribeOrderBook(int index_tool)
+        public bool SubscribeOrderBook(ref Tools Tools, int index_tool)
         {
             try
             {
@@ -222,7 +263,7 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// </summary>
         /// <param name="timeframe"></param>
         /// <returns></returns>
-        public bool SubscribeReceiveCandles(int index_tool, CandleInterval timeframe)
+        public bool SubscribeReceiveCandles(ref Tools Tools, int index_tool, CandleInterval timeframe)
         {
             try
             {
@@ -246,6 +287,10 @@ namespace TradingRobotsServer.Models.QuikConnector
             }
         }
 
+        /// <summary>
+        /// Подписка на получение изменений позиции в стоп-заявках.
+        /// </summary>
+        /// <returns></returns>
         public bool SubscribeOnStopOrder()
         {
             try
@@ -299,14 +344,14 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// <param name="candle"></param>
         private void OnNewCandle(Candle candle)
         {
-            for (int i = 0; i < Tools.Count; i++)
+            for (int i = 0; i < mainWindow.Tools.Count; i++)
             {
-                if (Tools[i].Candles != null && candle.SecCode == Tools[i].SecurityCode && candle.ClassCode == Tools[i].ClassCode && candle.Interval == Tools[i].Interval)
+                if (mainWindow.Tools[i].Candles != null && candle.SecCode == mainWindow.Tools[i].SecurityCode && candle.ClassCode == mainWindow.Tools[i].ClassCode && candle.Interval == mainWindow.Tools[i].Interval)
                 {
-                    Tools[i].AddNewCandle(candle);
+                    mainWindow.Tools[i].AddNewCandle(new Structures.Candle(mainWindow.Tools[i].Candles.Count, candle));
 
-                    QuikDateTime temp = Tools[i].Candles.Last().Datetime;
-                    DebugLog("Получена новая свеча от: " + temp.day + "." + temp.month + "." + temp.year + " " + temp.hour + "-" + temp.min + "-" + temp.sec + ", значения: " + Tools[i].Candles.Last().ToString());
+                    //QuikDateTime temp = mainWindow.Tools[i].Candles.Last().Datetime;
+                    //DebugLog("Получена новая свеча от: " + temp.day + "." + temp.month + "." + temp.year + " " + temp.hour + "-" + temp.min + "-" + temp.sec + ", значения: " + mainWindow.Tools[i].Candles.Last().ToString());
                 }
             }
         }
@@ -336,7 +381,16 @@ namespace TradingRobotsServer.Models.QuikConnector
 
         #region Отправление заявок
 
-        public async Task LimitOrder(int i, Operation operation, decimal price, int vol)
+        /// <summary>
+        /// Выставление лимитированной заявки.
+        /// </summary>
+        /// <param name="i"></param>
+        /// <param name="Tools"></param>
+        /// <param name="operation"></param>
+        /// <param name="price"></param>
+        /// <param name="vol"></param>
+        /// <returns></returns>
+        public async Task LimitOrder(int i, Tools Tools, Operation operation, decimal price, int vol)
         {
             try
             {
@@ -379,7 +433,15 @@ namespace TradingRobotsServer.Models.QuikConnector
             }
         }
 
-        public async Task MarketOrder(int i, Operation operation, int vol)
+        /// <summary>
+        /// Выставление заявки по рынку.
+        /// </summary>
+        /// <param name="i"></param>
+        /// <param name="Tools"></param>
+        /// <param name="operation"></param>
+        /// <param name="vol"></param>
+        /// <returns></returns>
+        public async Task MarketOrder(int i, Tools Tools, Operation operation, int vol)
         {
             try
             {
@@ -422,30 +484,48 @@ namespace TradingRobotsServer.Models.QuikConnector
             }
         }
 
-        public async Task TakeProfitStotLimitOrder(int i, decimal offset, decimal spread, Condition condition, 
-            decimal takeprofit, decimal stoplimit, decimal price, Operation operation, int vol, 
+        /// <summary>
+        /// Выставление стоп-заявки типа тайк-профит и стоп-лимит.
+        /// </summary>
+        /// <param name="Tool"></param>
+        /// <param name="offset"></param>
+        /// <param name="spread"></param>
+        /// <param name="takeprofit"></param>
+        /// <param name="stoplimit"></param>
+        /// <param name="price"></param>
+        /// <param name="operation"></param>
+        /// <param name="vol"></param>
+        /// <param name="offset_units"></param>
+        /// <param name="spread_unit"></param>
+        /// <returns></returns>
+        public async Task TakeProfitStotLimitOrder(Tool Tool, decimal offset, decimal spread,
+            decimal takeprofit, decimal stoplimit, decimal price, Operation operation, int vol,
             OffsetUnits offset_units = OffsetUnits.PRICE_UNITS, OffsetUnits spread_unit = OffsetUnits.PRICE_UNITS)
         {
             try
             {
                 StopOrder order = new StopOrder()
                 {
-                    Account = Tools[i].AccountID,
-                    ClassCode = Tools[i].ClassCode,
+                    Account = Tool.AccountID,
+                    ClassCode = Tool.ClassCode,
                     ClientCode = clientCode,
-                    SecCode = Tools[i].SecurityCode,
+                    SecCode = Tool.SecurityCode,
                     Offset = offset,
                     OffsetUnit = offset_units,
                     Spread = spread,
                     SpreadUnit = spread_unit,
                     StopOrderType = StopOrderType.TakeProfitStopLimit,
-                    Condition = condition,
-                    ConditionPrice = takeprofit,
-                    ConditionPrice2 = stoplimit,
-                    Price = price,
+                    ConditionPrice = Math.Round(takeprofit, Tool.PriceAccuracy),
+                    ConditionPrice2 = Math.Round(stoplimit, Tool.PriceAccuracy),
+                    Price = Math.Round(price, Tool.PriceAccuracy),
                     Operation = operation,
                     Quantity = vol
                 };
+
+                if (operation == Operation.Buy)
+                    order.Condition = Condition.MoreOrEqual;
+                else
+                    order.Condition = Condition.LessOrEqual;
 
                 DebugLog("Выставляем стоп-заявку на покупку, по цене:" + price + "...");
                 long transID = await quik.StopOrders.CreateStopOrder(order).ConfigureAwait(false);
@@ -458,7 +538,155 @@ namespace TradingRobotsServer.Models.QuikConnector
                         List<StopOrder> StopOrders = quik.StopOrders.GetStopOrders().Result;
                         foreach (StopOrder stoporder in StopOrders)
                         {
-                            if (stoporder.TransId == transID && stoporder.ClassCode == Tools[i].ClassCode && stoporder.SecCode == Tools[i].SecurityCode)
+                            if (stoporder.TransId == transID && stoporder.ClassCode == Tool.ClassCode && stoporder.SecCode == Tool.SecurityCode)
+                            {
+                                DebugLog("Стоп-заявка выставлена. Номер стоп-заявки - " + stoporder.OrderNum);
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        DebugLog("Ошибка получения номера стоп-заявки.");
+                    }
+                }
+                else
+                {
+                    DebugLog("Неудачная попытка выставления стоп-заявки.");
+                }
+            }
+            catch
+            {
+                DebugLog("Ошибка выставления стоп-заявки.");
+            }
+        }
+
+        /// <summary>
+        /// Выставление стоп-заявки типа тейк-профит.
+        /// </summary>
+        /// <param name="Tool"></param>
+        /// <param name="offset"></param>
+        /// <param name="spread"></param>
+        /// <param name="takeprofit"></param>
+        /// <param name="price"></param>
+        /// <param name="operation"></param>
+        /// <param name="vol"></param>
+        /// <param name="offset_units"></param>
+        /// <param name="spread_unit"></param>
+        /// <returns></returns>
+        public async Task TakeProfitOrder(Tool Tool, decimal offset, decimal spread,
+            decimal takeprofit, decimal price, Operation operation, int vol,
+            OffsetUnits offset_units = OffsetUnits.PRICE_UNITS, OffsetUnits spread_unit = OffsetUnits.PRICE_UNITS)
+        {
+            try
+            {
+                StopOrder order = new StopOrder()
+                {
+                    Account = Tool.AccountID,
+                    ClassCode = Tool.ClassCode,
+                    ClientCode = clientCode,
+                    SecCode = Tool.SecurityCode,
+                    Offset = offset,
+                    OffsetUnit = offset_units,
+                    Spread = spread,
+                    SpreadUnit = spread_unit,
+                    StopOrderType = StopOrderType.TakeProfit,
+                    ConditionPrice = Math.Round(takeprofit, Tool.PriceAccuracy),
+                    Price = Math.Round(price, Tool.PriceAccuracy),
+                    Operation = operation,
+                    Quantity = vol
+                };
+
+                if (operation == Operation.Sell)
+                    order.Condition = Condition.MoreOrEqual;
+                else
+                    order.Condition = Condition.LessOrEqual;
+
+                DebugLog("Выставляем тейк-профит, по цене:" + price + "...");
+                long transID = await quik.StopOrders.CreateStopOrder(order).ConfigureAwait(false);
+                if (transID > 0)
+                {
+                    DebugLog("Заявка выставлена. ID транзакции - " + transID);
+                    Thread.Sleep(500);
+                    try
+                    {
+                        List<StopOrder> StopOrders = quik.StopOrders.GetStopOrders().Result;
+                        foreach (StopOrder stoporder in StopOrders)
+                        {
+                            if (stoporder.TransId == transID && stoporder.ClassCode == Tool.ClassCode && stoporder.SecCode == Tool.SecurityCode)
+                            {
+                                DebugLog("Стоп-заявка выставлена. Номер стоп-заявки - " + stoporder.OrderNum);
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        DebugLog("Ошибка получения номера стоп-заявки.");
+                    }
+                }
+                else
+                {
+                    DebugLog("Неудачная попытка выставления стоп-заявки.");
+                }
+            }
+            catch
+            {
+                DebugLog("Ошибка выставления стоп-заявки.");
+            }
+        }
+
+        /// <summary>
+        /// Выставление стоп-заявки типа стоп-лимит. 
+        /// </summary>
+        /// <param name="Tool"></param>
+        /// <param name="offset"></param>
+        /// <param name="spread"></param>
+        /// <param name="stoploss"></param>
+        /// <param name="price"></param>
+        /// <param name="operation"></param>
+        /// <param name="vol"></param>
+        /// <param name="offset_units"></param>
+        /// <param name="spread_unit"></param>
+        /// <returns></returns>
+        public async Task StopLimitOrder(Tool Tool, decimal offset, decimal spread,
+            decimal stoploss, decimal price, Operation operation, int vol,
+            OffsetUnits offset_units = OffsetUnits.PRICE_UNITS, OffsetUnits spread_unit = OffsetUnits.PRICE_UNITS)
+        {
+            try
+            {
+                StopOrder order = new StopOrder()
+                {
+                    Account = Tool.AccountID,
+                    ClassCode = Tool.ClassCode,
+                    ClientCode = clientCode,
+                    SecCode = Tool.SecurityCode,
+                    Offset = offset,
+                    OffsetUnit = offset_units,
+                    Spread = spread,
+                    SpreadUnit = spread_unit,
+                    StopOrderType = StopOrderType.StopLimit,
+                    ConditionPrice = Math.Round(stoploss, Tool.PriceAccuracy),
+                    Price = Math.Round(price, Tool.PriceAccuracy),
+                    Operation = operation,
+                    Quantity = vol
+                };
+
+                if (operation == Operation.Sell)
+                    order.Condition = Condition.LessOrEqual;
+                else
+                    order.Condition = Condition.MoreOrEqual;
+
+                DebugLog("Выставляем стоп-лимит, по цене:" + price + "...");
+                long transID = await quik.StopOrders.CreateStopOrder(order).ConfigureAwait(false);
+                if (transID > 0)
+                {
+                    DebugLog("Заявка выставлена. ID транзакции - " + transID);
+                    Thread.Sleep(500);
+                    try
+                    {
+                        List<StopOrder> StopOrders = quik.StopOrders.GetStopOrders().Result;
+                        foreach (StopOrder stoporder in StopOrders)
+                        {
+                            if (stoporder.TransId == transID && stoporder.ClassCode == Tool.ClassCode && stoporder.SecCode == Tool.SecurityCode)
                             {
                                 DebugLog("Стоп-заявка выставлена. Номер стоп-заявки - " + stoporder.OrderNum);
                             }
@@ -486,7 +714,7 @@ namespace TradingRobotsServer.Models.QuikConnector
             {
                 List<Order> Orders = quik.Orders.GetOrders().Result;
                 int index_order = Orders.FindIndex(o => o.OrderNum == id_order);
-                if (Orders[index_order] != null && Orders[index_order].OrderNum > 0) 
+                if (Orders[index_order] != null && Orders[index_order].OrderNum > 0)
                     DebugLog("Удаляем заявку на покупку с номером - " + Orders[index_order].OrderNum + " ...");
                 long x = quik.Orders.KillOrder(Orders[index_order]).Result;
                 DebugLog("Результат - " + x + " ...");

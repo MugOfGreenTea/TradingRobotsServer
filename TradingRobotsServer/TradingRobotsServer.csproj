@@ -24,6 +24,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -33,6 +34,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="LiveCharts, Version=0.9.7.0, Culture=neutral, PublicKeyToken=0bc1f845d1ebb8df, processorArchitecture=MSIL">
@@ -86,6 +88,7 @@
     <Compile Include="Models\Structures\Enums.cs" />
     <Compile Include="Models\Structures\StockData.cs" />
     <Compile Include="Models\Support\ManagementOfRisks.cs" />
+    <Compile Include="SuperClass.cs" />
     <Compile Include="ViewModels\QuikConnectingWindowViewModel.cs" />
     <Compile Include="View\QuikConnectingWindow.xaml.cs">
       <DependentUpon>QuikConnectingWindow.xaml</DependentUpon>

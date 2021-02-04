@@ -2,6 +2,7 @@
 using QuikSharp.DataStructures;
 using System;
 using System.Collections.Generic;
+using Candle = TradingRobotsServer.Models.Structures.Candle;
 
 namespace TradingRobotsServer.Models.QuikConnector
 {
