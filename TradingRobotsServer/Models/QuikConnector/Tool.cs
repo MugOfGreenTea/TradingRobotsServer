@@ -2,6 +2,8 @@
 using QuikSharp.DataStructures;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using TradingRobotsServer.Models.Structures;
 using Candle = TradingRobotsServer.Models.Structures.Candle;
 
 namespace TradingRobotsServer.Models.QuikConnector
@@ -86,6 +88,7 @@ namespace TradingRobotsServer.Models.QuikConnector
             get
             {
                 lastPrice = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, "LAST").Result.ParamValue.Replace('.', separator));
+                NewTick?.Invoke(new Tick(securityCode, classCode, interval, lastPrice));
                 return lastPrice;
             }
         }
@@ -105,6 +108,11 @@ namespace TradingRobotsServer.Models.QuikConnector
         public bool ToolCreated = false;
         public bool isSubscribedToolOrderBook = false;
         public bool isSubscribedToolCandles = false;
+
+        public delegate void OnNewCandle(Candle candle);
+        public event OnNewCandle NewCandle;
+        public delegate void OnNewTick(Tick tick);
+        public event OnNewTick NewTick;
 
         public Tool(ref Quik quik)
         {
@@ -172,7 +180,7 @@ namespace TradingRobotsServer.Models.QuikConnector
                             Console.WriteLine("Instrument.GetBaseParam. Ошибка получения priceStep для " + securityCode + ": " + e.Message);
                             priceStep = 0;
                         }
-                        if (priceStep == 0) 
+                        if (priceStep == 0)
                             priceStep = step;
                         ToolCreated = true;
                     }
@@ -198,9 +206,37 @@ namespace TradingRobotsServer.Models.QuikConnector
             }
         }
 
+        public decimal CallLastPrice()
+        {
+            lastPrice = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, "LAST").Result.ParamValue.Replace('.', separator));
+            NewTick?.Invoke(new Tick(securityCode, classCode, interval, lastPrice));
+            return lastPrice;
+        }
+
+        public void SubscribeNewCandle()
+        {
+            quik.Candles.NewCandle += ToolNewCandle;
+        }
+
         public void AddNewCandle(Candle candle)
         {
+            if (Candles.Count != 0 && Candles.Count >= 200)
+                candles.RemoveAt(0);
+            candle.ID = Candles.Last().ID + 1;
             candles.Add(candle);
+
+            NewCandle?.Invoke(candle);
+        }
+
+        public void ToolNewCandle(QuikSharp.DataStructures.Candle candle)
+        {
+            Candle temp_candle = new Candle(candle);
+            if (Candles.Count != 0 && Candles.Count >= 200)
+                candles.RemoveAt(0);
+            temp_candle.ID = Candles.Last().ID + 1;
+            candles.Add(temp_candle);
+
+            NewCandle?.Invoke(temp_candle);
         }
     }
 }

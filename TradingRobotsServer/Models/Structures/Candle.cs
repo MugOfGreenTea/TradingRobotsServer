@@ -15,25 +15,6 @@ namespace TradingRobotsServer.Models.Structures
         public decimal Low { get; set; }
         public TypeCandle TypeCandle { get; set; }
 
-        #region Candles subscription info
-
-        /// <summary>
-        /// Код инструмента.
-        /// </summary>
-        public string SecCode { get; set; }
-
-        /// <summary>
-        /// Код класса.
-        /// </summary>
-        public string ClassCode { get; set; }
-
-        /// <summary>
-        /// Интервал подписки.
-        /// </summary>
-        public CandleInterval Interval { get; set; }
-
-        #endregion
-
         public Candle(int id, string sec_code, string class_code, CandleInterval interval, DateTime dateTime,
                 decimal open, decimal high, decimal low, decimal close, int vol)
         {
@@ -54,9 +35,8 @@ namespace TradingRobotsServer.Models.Structures
                 TypeCandle = TypeCandle.Falling;
         }
 
-        public Candle(int id, QuikSharp.DataStructures.Candle candle)
+        public Candle(QuikSharp.DataStructures.Candle candle)
         {
-            ID = id;
             SecCode = candle.SecCode;
             ClassCode = candle.ClassCode;
             Interval = candle.Interval;
@@ -71,6 +51,11 @@ namespace TradingRobotsServer.Models.Structures
                 TypeCandle = TypeCandle.Growing;
             else
                 TypeCandle = TypeCandle.Falling;
+        }
+
+        public override string ToString()
+        {
+            return $"SecCode: {SecCode}, ID: {ID}, DateTime: {DateTime}, Open: {Open}, Close: {Close}, High: {High}, Low: {Low}, Volume: {Vol}";
         }
     }
 }

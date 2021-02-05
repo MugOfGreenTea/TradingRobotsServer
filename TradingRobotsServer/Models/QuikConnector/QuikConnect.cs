@@ -16,15 +16,13 @@ namespace TradingRobotsServer.Models.QuikConnector
     public class QuikConnect
     {
         public Quik quik;
-        //public Tools Tools;
         private string clientCode;
 
-        private RobotPanelViewModel mainWindow;
+        //private TradingRobot Robot;
 
-        public QuikConnect(RobotPanelViewModel mainWindowViewModel)
+        public QuikConnect(TradingRobot robot)
         {
-            mainWindow = mainWindowViewModel;
-            //Tools = new Tools();
+            //Robot = robot;
         }
 
         #region Подключения
@@ -122,7 +120,6 @@ namespace TradingRobotsServer.Models.QuikConnector
         //    }
         //    return false;
         //}
-
         public Tool ToolConnectingReturn(string name_tool, CandleInterval interval)
         {
             string classCode;
@@ -219,6 +216,39 @@ namespace TradingRobotsServer.Models.QuikConnector
                 return false;
             }
         }
+        
+        /// <summary>
+        /// Подписка на стакан.
+        /// </summary>
+        public bool SubscribeOrderBook(ref Tool Tool)
+        {
+            try
+            {
+                DebugLog("Подписываемся на стакан...");
+                quik.OrderBook.Subscribe(Tool.ClassCode, Tool.SecurityCode).Wait();
+                Tool.isSubscribedToolOrderBook = quik.OrderBook.IsSubscribed(Tool.ClassCode, Tool.SecurityCode).Result;
+
+                if (Tool.isSubscribedToolOrderBook)
+                {
+                    DebugLog("Подписка на стакан прошла успешно.");
+
+                    DebugLog("Подписываемся на изменение стакана (OnQuote)...");
+                    quik.Events.OnQuote += OnQuoteDo;
+                    DebugLog("Подписка включена...");
+                    return true;
+                }
+                else
+                {
+                    DebugLog("Подписка на стакан не удалась.");
+                    return false;
+                }
+            }
+            catch
+            {
+                DebugLog("Подписка на стакан не удалась.");
+                return false;
+            }
+        }
 
         /// <summary>
         /// Подписка на событие изменения позиции на срочном рынке.
@@ -259,30 +289,75 @@ namespace TradingRobotsServer.Models.QuikConnector
         }
 
         /// <summary>
-        /// Подписка на получение свеч.
+        /// Подписка инструмента на получение свеч.
         /// </summary>
         /// <param name="timeframe"></param>
         /// <returns></returns>
-        public bool SubscribeReceiveCandles(ref Tools Tools, int index_tool, CandleInterval timeframe)
+        public bool SubscribeToolReceiveCandles(ref Tools Tools, int index_tool, CandleInterval timeframe)
         {
             try
             {
                 while (!Tools[index_tool].isSubscribedToolCandles)
                 {
-                    DebugLog("Подписываемся на получение свечек: " + Tools[index_tool].ClassCode + " | " + Tools[index_tool].SecurityCode + " | " + timeframe + "...");
+                    DebugLog($"Подписываем инструмент {Tools[index_tool].SecurityCode} на получение свеч: " + Tools[index_tool].ClassCode + " | " + Tools[index_tool].SecurityCode + " | " + timeframe + "...");
                     quik.Candles.Subscribe(Tools[index_tool].ClassCode, Tools[index_tool].SecurityCode, timeframe).Wait();
 
                     DebugLog("Проверяем состояние подписки...");
                     Tools[index_tool].isSubscribedToolCandles = quik.Candles.IsSubscribed(Tools[index_tool].ClassCode, Tools[index_tool].SecurityCode, timeframe).Result;
-
-                    quik.Candles.NewCandle += OnNewCandle;
                 }
                 DebugLog("Подписка включена...");
                 return true;
             }
             catch
             {
-                DebugLog("Подписка на получение свеч не удалась.");
+                DebugLog("Подписка инструмента на получение свеч не удалась.");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Подписка инструмента на получение свеч.
+        /// </summary>
+        /// <param name="timeframe"></param>
+        /// <returns></returns>
+        public bool SubscribeToolReceiveCandles(ref Tool Tool, CandleInterval timeframe)
+        {
+            try
+            {
+                while (!Tool.isSubscribedToolCandles)
+                {
+                    DebugLog($"Подписываем инструмент {Tool.SecurityCode} на получение свеч: " + Tool.ClassCode + " | " + Tool.SecurityCode + " | " + timeframe + "...");
+                    quik.Candles.Subscribe(Tool.ClassCode, Tool.SecurityCode, timeframe).Wait();
+
+                    DebugLog("Проверяем состояние подписки...");
+                    Tool.isSubscribedToolCandles = quik.Candles.IsSubscribed(Tool.ClassCode, Tool.SecurityCode, timeframe).Result;
+                }
+                DebugLog("Подписка включена...");
+                return true;
+            }
+            catch
+            {
+                DebugLog("Подписка инструмента на получение свеч не удалась.");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Подписка на получение свеч.
+        /// </summary>
+        /// <returns></returns>
+        public bool SubscribeReceiveCandles()
+        {
+            try
+            {
+                DebugLog("Подписываемся на получения свеч (OnNewCandle)...");
+                quik.Candles.NewCandle += OnNewCandle;
+                DebugLog("Подписка включена...");
+                return true;
+            }
+            catch
+            {
+                DebugLog("Подписка на получения свеч (OnNewCandle) не удалась.");
                 return false;
             }
         }
@@ -342,20 +417,29 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// Обработчик события получения новой свечи.
         /// </summary>
         /// <param name="candle"></param>
+        //private void OnNewCandle(Candle candle)
+        //{
+        //    for (int i = 0; i < mainWindow.Tools.Count; i++)
+        //    {
+        //        if (mainWindow.Tools[i].Candles != null && candle.SecCode == mainWindow.Tools[i].SecurityCode && candle.ClassCode == mainWindow.Tools[i].ClassCode && candle.Interval == mainWindow.Tools[i].Interval)
+        //        {
+        //            mainWindow.Tools[i].AddNewCandle(new Structures.Candle(candle));
+
+        //            //QuikDateTime temp = mainWindow.Tools[i].Candles.Last().Datetime;
+        //            //DebugLog("Получена новая свеча от: " + temp.day + "." + temp.month + "." + temp.year + " " + temp.hour + "-" + temp.min + "-" + temp.sec + ", значения: " + mainWindow.Tools[i].Candles.Last().ToString());
+        //        }
+        //    }
+        //}
         private void OnNewCandle(Candle candle)
         {
-            for (int i = 0; i < mainWindow.Tools.Count; i++)
-            {
-                if (mainWindow.Tools[i].Candles != null && candle.SecCode == mainWindow.Tools[i].SecurityCode && candle.ClassCode == mainWindow.Tools[i].ClassCode && candle.Interval == mainWindow.Tools[i].Interval)
-                {
-                    mainWindow.Tools[i].AddNewCandle(new Structures.Candle(mainWindow.Tools[i].Candles.Count, candle));
+            //if (Robot.Tool.Candles != null && candle.SecCode == Robot.Tool.SecurityCode && candle.ClassCode == Robot.Tool.ClassCode && candle.Interval == Robot.Tool.Interval)
+            //{
+            //    Robot.Tool.AddNewCandle(new Structures.Candle(candle));
 
-                    //QuikDateTime temp = mainWindow.Tools[i].Candles.Last().Datetime;
-                    //DebugLog("Получена новая свеча от: " + temp.day + "." + temp.month + "." + temp.year + " " + temp.hour + "-" + temp.min + "-" + temp.sec + ", значения: " + mainWindow.Tools[i].Candles.Last().ToString());
-                }
-            }
+            QuikDateTime temp = candle.Datetime;
+            DebugLog("Получена новая свеча из квика от: " + temp.day + "." + temp.month + "." + temp.year + " " + temp.hour + "-" + temp.min + "-" + temp.sec + ", значения: " + candle.ToString());
+            //}
         }
-
         /// <summary>
         /// Обработчик события изменение позиции в стоп-заявках. 
         /// </summary>
@@ -748,7 +832,7 @@ namespace TradingRobotsServer.Models.QuikConnector
         public void DebugLog(string log_string)
         {
             Debug.WriteLine(log_string);
-            mainWindow.Log += log_string + "\r\n";
+            //mainWindow.Log += log_string + "\r\n";
         }
 
         #endregion

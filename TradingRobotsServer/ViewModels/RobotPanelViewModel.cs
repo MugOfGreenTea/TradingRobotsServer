@@ -68,19 +68,6 @@ namespace TradingRobotsServer.ViewModels
 
         #region
 
-        public QuikConnect quik_connect;
-        public Tools Tools;
-        public Thread thread;
-        public System.Timers.Timer timer;
-        bool check_quik_connecting;
-        bool check_tool_connecting;
-        bool check_subscribe_candles;
-        bool check_subscribe_orderbook;
-        bool check_subscribe_futures_client_holding;
-        bool check_subscribe_depo_limit;
-        bool check_subscribe_stoplimit;
-
-        SetPositionByCandleHighLowStrategy strategy;
 
         #endregion
 
@@ -92,55 +79,56 @@ namespace TradingRobotsServer.ViewModels
         }
         private void On_Button_Execute(object obj)
         {
-            quik_connect = new QuikConnect(this);
-            Tools = new Tools();
-            check_quik_connecting = quik_connect.QuikConnecting(Quik.DefaultPort, Quik.DefaultHost);
-            if (check_quik_connecting)
-            {
-                Tools.Add(quik_connect.ToolConnectingReturn("SBER", QuikSharp.DataStructures.CandleInterval.M1));
-                Tools.Add(quik_connect.ToolConnectingReturn("GAZP", QuikSharp.DataStructures.CandleInterval.M1));
-                //check_tool_connecting = quik_connect.ToolConnecting("GAZP", QuikSharp.DataStructures.CandleInterval.M1);
-            }
+            //quik_connect = new QuikConnect(this);
+            //Tools = new Tools();
+            //check_quik_connecting = quik_connect.QuikConnecting(Quik.DefaultPort, Quik.DefaultHost);
+            //if (check_quik_connecting)
+            //{
+            //    Tools.Add(quik_connect.ToolConnectingReturn("SBER", QuikSharp.DataStructures.CandleInterval.M1));
+            //    Tools.Add(quik_connect.ToolConnectingReturn("GAZP", QuikSharp.DataStructures.CandleInterval.M5));
+            //    //check_tool_connecting = quik_connect.ToolConnecting("GAZP", QuikSharp.DataStructures.CandleInterval.M1);
+            //}
 
-            //if (check_tool_connecting)
-            {
-                check_subscribe_candles = quik_connect.SubscribeReceiveCandles(ref Tools, 0, QuikSharp.DataStructures.CandleInterval.M1);
-                check_subscribe_orderbook = quik_connect.SubscribeOrderBook(ref Tools, 0);
-                check_subscribe_candles = quik_connect.SubscribeReceiveCandles(ref Tools, 1, QuikSharp.DataStructures.CandleInterval.M1);
-                check_subscribe_orderbook = quik_connect.SubscribeOrderBook(ref Tools, 1);
-                check_subscribe_futures_client_holding = quik_connect.SubscribeOnFuturesClientHolding();
-                check_subscribe_depo_limit = quik_connect.SubscribeOnDepoLimit();
-                check_subscribe_stoplimit = quik_connect.SubscribeOnStopOrder();
+            ////if (check_tool_connecting)
+            //{
+            //    check_subscribe_orderbook = quik_connect.SubscribeOrderBook(ref Tools, 0);
+            //    check_subscribe_candles = quik_connect.SubscribeToolReceiveCandles(ref Tools, 0, QuikSharp.DataStructures.CandleInterval.M1);
+            //    check_subscribe_orderbook = quik_connect.SubscribeOrderBook(ref Tools, 1);
+            //    check_subscribe_candles = quik_connect.SubscribeToolReceiveCandles(ref Tools, 1, QuikSharp.DataStructures.CandleInterval.M5);
+            //    quik_connect.SubscribeReceiveCandles();
+            //    check_subscribe_futures_client_holding = quik_connect.SubscribeOnFuturesClientHolding();
+            //    check_subscribe_depo_limit = quik_connect.SubscribeOnDepoLimit();
+            //    check_subscribe_stoplimit = quik_connect.SubscribeOnStopOrder();
 
-                if (check_subscribe_candles && check_subscribe_orderbook && check_subscribe_futures_client_holding
-                    && check_subscribe_depo_limit && check_subscribe_stoplimit)
-                {
-                    thread = new Thread(new ThreadStart(StartTimer));
-                    thread.Start();
-                }
-            }
+            //    if (check_subscribe_candles && check_subscribe_orderbook && check_subscribe_futures_client_holding
+            //        && check_subscribe_depo_limit && check_subscribe_stoplimit)
+            //    {
+            //        thread = new Thread(new ThreadStart(StartTimer));
+            //        thread.Start();
+            //    }
+            //}
 
-            strategy = new SetPositionByCandleHighLowStrategy(15, 5, 0.3m, new TimeSpan(10, 39, 0));
+            //strategy = new SetPositionByCandleHighLowStrategy(15, 5, 0.3m, new TimeSpan(10, 39, 0), true, false, Tools[0]);
+            //strategy2 = new SetPositionByCandleHighLowStrategy(15, 5, 0.3m, new TimeSpan(10, 39, 0), true, false, Tools[1]);
         }
 
-        private void StartTimer()
-        {
-            timer = new System.Timers.Timer();
-            timer.Interval = 200;
-            timer.Elapsed += CallLastPrice;
-            timer.Start();
-        }
+        //private void StartTimer()
+        //{
+        //    timer = new System.Timers.Timer();
+        //    timer.Interval = 200;
+        //    timer.Elapsed += CallLastPrice;
+        //    timer.Start();
+        //}
 
-        private void CallLastPrice(object sender, EventArgs e)
-        {
-            LastPrice = Tools[0].LastPrice;
-        }
+        //private void CallLastPrice(object sender, EventArgs e)
+        //{
+        //    LastPrice = Tools[0].LastPrice;
+        //}
 
         private bool Can_Button2_Execute(object obj)
         {
             return true;
         }
-
         private void On_Button2_Execute(object obj)
         {
             //quik_connect.LimitOrder(0, Tools, QuikSharp.DataStructures.Operation.Buy, LastPrice + 2, 1);
@@ -154,7 +142,7 @@ namespace TradingRobotsServer.ViewModels
             //quik_connect.TakeProfitStotLimitOrder(Tools[0], 1.5m, 0.1m, LastPrice - 3, LastPrice + 2, LastPrice + 2.5m, QuikSharp.DataStructures.Operation.Sell, 2);
             //quik_connect.TakeProfitStotLimitOrder(Tools[1], 1.5m, 0.1m, LastPrice - 3, LastPrice + 2, LastPrice + 2.5m, QuikSharp.DataStructures.Operation.Sell, 2);
 
-            quik_connect.TakeProfitOrder(Tools[0], 0, 0.1m, LastPrice + 1, LastPrice + 1, QuikSharp.DataStructures.Operation.Sell, 2);
+            //quik_connect.TakeProfitOrder(Tools[0], 0, 0.1m, LastPrice + 1, LastPrice + 1, QuikSharp.DataStructures.Operation.Sell, 2);
         }
 
 
