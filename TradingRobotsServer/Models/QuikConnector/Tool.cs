@@ -230,13 +230,28 @@ namespace TradingRobotsServer.Models.QuikConnector
 
         public void ToolNewCandle(QuikSharp.DataStructures.Candle candle)
         {
-            Candle temp_candle = new Candle(candle);
-            if (Candles.Count != 0 && Candles.Count >= 200)
-                candles.RemoveAt(0);
-            temp_candle.ID = Candles.Last().ID + 1;
-            candles.Add(temp_candle);
+            if (Candles != null && candle.SecCode == SecurityCode && candle.ClassCode == ClassCode && candle.Interval == Interval)
+            {
+                Candle temp_candle = new Candle(candle);
+                if (Candles.Count != 0 && Candles.Count >= 200)
+                    candles.RemoveAt(0);
+                temp_candle.ID = Candles.Count;
+                candles.Add(temp_candle);
 
-            NewCandle?.Invoke(temp_candle);
+                NewCandle?.Invoke(temp_candle);
+            }
+        }
+
+        public void GetHistoricalCandlesAsync(int count)
+        {
+            List<QuikSharp.DataStructures.Candle> temp_candles = quik.Candles.GetLastCandles(classCode, securityCode, interval, count).Result;
+            foreach (var candle in temp_candles)
+            {
+                Candle temp_candle = new Candle(candle);
+                temp_candle.ID = Candles.Count;
+                Candles.Add(temp_candle);
+                NewCandle?.Invoke(Candles.Last());
+            }
         }
     }
 }

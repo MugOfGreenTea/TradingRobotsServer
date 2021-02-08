@@ -16,11 +16,12 @@ namespace TradingRobotsServer.Models.QuikConnector
     public class QuikConnect
     {
         public Quik quik;
+        public static Quik Quik = new Quik(Quik.DefaultPort);
         private string clientCode;
 
         //private TradingRobot Robot;
 
-        public QuikConnect(TradingRobot robot)
+        public QuikConnect()
         {
             //Robot = robot;
         }
@@ -421,12 +422,12 @@ namespace TradingRobotsServer.Models.QuikConnector
         //{
         //    for (int i = 0; i < mainWindow.Tools.Count; i++)
         //    {
-        //        if (mainWindow.Tools[i].Candles != null && candle.SecCode == mainWindow.Tools[i].SecurityCode && candle.ClassCode == mainWindow.Tools[i].ClassCode && candle.Interval == mainWindow.Tools[i].Interval)
+        //        if (mainWindow.Tool.Candles != null && candle.SecCode == mainWindow.Tool.SecurityCode && candle.ClassCode == mainWindow.Tool.ClassCode && candle.Interval == mainWindow.Tool.Interval)
         //        {
-        //            mainWindow.Tools[i].AddNewCandle(new Structures.Candle(candle));
+        //            mainWindow.Tool.AddNewCandle(new Structures.Candle(candle));
 
-        //            //QuikDateTime temp = mainWindow.Tools[i].Candles.Last().Datetime;
-        //            //DebugLog("Получена новая свеча от: " + temp.day + "." + temp.month + "." + temp.year + " " + temp.hour + "-" + temp.min + "-" + temp.sec + ", значения: " + mainWindow.Tools[i].Candles.Last().ToString());
+        //            //QuikDateTime temp = mainWindow.Tool.Candles.Last().Datetime;
+        //            //DebugLog("Получена новая свеча от: " + temp.day + "." + temp.month + "." + temp.year + " " + temp.hour + "-" + temp.min + "-" + temp.sec + ", значения: " + mainWindow.Tool.Candles.Last().ToString());
         //        }
         //    }
         //}
@@ -474,13 +475,13 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// <param name="price"></param>
         /// <param name="vol"></param>
         /// <returns></returns>
-        public async Task LimitOrder(int i, Tools Tools, Operation operation, decimal price, int vol)
+        public async Task LimitOrder(Tool Tool, Operation operation, decimal price, int vol)
         {
             try
             {
-                decimal priceInOrder = Math.Round(Tools[i].LastPrice + Tools[i].Step * 5, Tools[i].PriceAccuracy);
-                DebugLog("Выставляем заявку на покупку, по цене:" + priceInOrder + " ...");
-                long transactionID = (await quik.Orders.SendLimitOrder(Tools[i].ClassCode, Tools[i].SecurityCode, Tools[i].AccountID, operation, price, vol).ConfigureAwait(false)).TransID;
+                price = Math.Round(price, Tool.PriceAccuracy);
+                DebugLog("Выставляем заявку на покупку, по цене:" + price + " ...");
+                long transactionID = (await quik.Orders.SendLimitOrder(Tool.ClassCode, Tool.SecurityCode, Tool.AccountID, operation, price, vol).ConfigureAwait(false)).TransID;
                 if (transactionID > 0)
                 {
                     DebugLog("Заявка выставлена. ID транзакции - " + transactionID);
@@ -490,7 +491,7 @@ namespace TradingRobotsServer.Models.QuikConnector
                         List<Order> Orders = quik.Orders.GetOrders().Result;
                         foreach (Order order in Orders)
                         {
-                            if (order.TransID == transactionID && order.ClassCode == Tools[i].ClassCode && order.SecCode == Tools[i].SecurityCode)
+                            if (order.TransID == transactionID && order.ClassCode == Tool.ClassCode && order.SecCode == Tool.SecurityCode)
                             {
                                 DebugLog("Заявка выставлена. Номер заявки - " + order.OrderNum);
                                 //Text2TextBox(textBoxOrderNumber, _order.OrderNum.ToString());
@@ -525,13 +526,13 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// <param name="operation"></param>
         /// <param name="vol"></param>
         /// <returns></returns>
-        public async Task MarketOrder(int i, Tools Tools, Operation operation, int vol)
+        public async Task MarketOrder(Tool Tool, Operation operation, int vol)
         {
             try
             {
-                //decimal priceInOrder = Math.Round(Tools[i].LastPrice + Tools[i].Step * 5, Tools[i].PriceAccuracy);
+                //decimal priceInOrder = Math.Round(Tool.LastPrice + Tool.Step * 5, Tool.PriceAccuracy);
                 DebugLog("Выставляем рыночную заявку на покупку...");
-                long transactionID = (await quik.Orders.SendMarketOrder(Tools[i].ClassCode, Tools[i].SecurityCode, Tools[i].AccountID, Operation.Buy, 1).ConfigureAwait(false)).TransID;
+                long transactionID = (await quik.Orders.SendMarketOrder(Tool.ClassCode, Tool.SecurityCode, Tool.AccountID, operation, vol).ConfigureAwait(false)).TransID;
                 if (transactionID > 0)
                 {
                     DebugLog("Заявка выставлена. ID транзакции - " + transactionID);
@@ -541,7 +542,7 @@ namespace TradingRobotsServer.Models.QuikConnector
                         List<Order> Orders = quik.Orders.GetOrders().Result;
                         foreach (Order order in Orders)
                         {
-                            if (order.TransID == transactionID && order.ClassCode == Tools[i].ClassCode && order.SecCode == Tools[i].SecurityCode)
+                            if (order.TransID == transactionID && order.ClassCode == Tool.ClassCode && order.SecCode == Tool.SecurityCode)
                             {
                                 DebugLog("Заявка выставлена. Номер заявки - " + order.OrderNum);
                                 //Text2TextBox(textBoxOrderNumber, order.OrderNum.ToString());
@@ -792,6 +793,11 @@ namespace TradingRobotsServer.Models.QuikConnector
             }
         }
 
+        /// <summary>
+        /// Снятие заявки.
+        /// </summary>
+        /// <param name="id_order"></param>
+        /// <returns></returns>
         public async Task TakeOffOrder(long id_order)
         {
             try
@@ -799,29 +805,34 @@ namespace TradingRobotsServer.Models.QuikConnector
                 List<Order> Orders = quik.Orders.GetOrders().Result;
                 int index_order = Orders.FindIndex(o => o.OrderNum == id_order);
                 if (Orders[index_order] != null && Orders[index_order].OrderNum > 0)
-                    DebugLog("Удаляем заявку на покупку с номером - " + Orders[index_order].OrderNum + " ...");
-                long x = quik.Orders.KillOrder(Orders[index_order]).Result;
-                DebugLog("Результат - " + x + " ...");
+                    DebugLog("Снимаем заявку на покупку с номером - " + Orders[index_order].OrderNum + "...");
+                await quik.Orders.KillOrder(Orders[index_order]);
+                DebugLog("Заявка снята.");
             }
             catch
             {
-                DebugLog("Ошибка удаления заявки.");
+                DebugLog("Ошибка снятия заявки.");
             }
         }
 
+        /// <summary>
+        /// Снятие стоп-заявки.
+        /// </summary>
+        /// <param name="id_order"></param>
+        /// <returns></returns>
         public async Task TakeOffStopOrder(long id_order)
         {
             try
             {
                 List<StopOrder> StopOrders = quik.StopOrders.GetStopOrders().Result;
                 int index_order = StopOrders.FindIndex(o => o.OrderNum == id_order);
-                if (StopOrders[index_order] != null && StopOrders[index_order].OrderNum > 0) DebugLog("Удаляем заявку на покупку с номером - " + StopOrders[index_order].OrderNum + " ...");
-                long x = quik.StopOrders.KillStopOrder(StopOrders[index_order]).Result;
-                DebugLog("Результат - " + x + " ...");
+                if (StopOrders[index_order] != null && StopOrders[index_order].OrderNum > 0) DebugLog("Снимаем стоп-заявку с номером - " + StopOrders[index_order].OrderNum + "...");
+                await quik.StopOrders.KillStopOrder(StopOrders[index_order]);
+                DebugLog("Заявка снята.");
             }
             catch
             {
-                DebugLog("Ошибка удаления заявки.");
+                DebugLog("Ошибка снятия заявки.");
             }
         }
 
@@ -834,7 +845,11 @@ namespace TradingRobotsServer.Models.QuikConnector
             Debug.WriteLine(log_string);
             //mainWindow.Log += log_string + "\r\n";
         }
-
+        public static void DebugLogStats(string log_string)
+        {
+            Debug.WriteLine(log_string);
+            //mainWindow.Log += log_string + "\r\n";
+        }
         #endregion
     }
 }

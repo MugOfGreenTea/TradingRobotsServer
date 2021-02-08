@@ -24,4 +24,29 @@ namespace TradingRobotsServer.Models.Structures
         Min,
         Max
     }
+    public enum TypeOrder : byte
+    {
+        Null,
+        LimitOrder,
+        MarketOrder,
+        TakeProfit,
+        StopLimit,
+        TakeProfitAndStopLimit
+    }
+    public enum StatusDeal : byte
+    {
+        None,
+        WaitingOpen,
+        Open,
+        Closed,
+        ClosedPrematurely
+    }
+    public enum StatusOrder
+    {
+        Null,
+        Active,
+        Executed,
+        PartiallyExecuted,
+        Removed
+    }
 }

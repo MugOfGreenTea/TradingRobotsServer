@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TestQuotes.Infrastructure.Commands.Base;
 
 namespace TestQuotes.Infrastructure.Commands
 {
-    class RelayCommand : Command
+    internal class RelayCommand : Command
     {
         private readonly Action<object> _Execute;
         private readonly Func<object, bool> _CanExecute;

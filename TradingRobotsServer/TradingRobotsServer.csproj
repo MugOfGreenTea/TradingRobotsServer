@@ -88,12 +88,16 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Models\Strategy\Bot.cs" />
-    <Compile Include="Models\Strategy\IStrategy.cs" />
-    <Compile Include="Models\Strategy\SetPositionByCandleHighLowStrategy.cs" />
+    <Compile Include="Models\Logic\Bot.cs" />
+    <Compile Include="Models\Logic\Base\Strategy.cs" />
+    <Compile Include="Models\Logic\SetPositionByCandleHighLowStrategy.cs" />
+    <Compile Include="Models\Structures\DataPoint.cs" />
+    <Compile Include="Models\Structures\Deal.cs" />
     <Compile Include="Models\Structures\Enums.cs" />
+    <Compile Include="Models\Structures\OrderInfo.cs" />
     <Compile Include="Models\Structures\StockData.cs" />
     <Compile Include="Models\Structures\Tick.cs" />
+    <Compile Include="Models\Structures\TrendDataPoint.cs" />
     <Compile Include="Models\Support\ManagementOfRisks.cs" />
     <Compile Include="Models\Robots\TradingRobot.cs" />
     <Compile Include="ViewModels\QuikConnectingWindowViewModel.cs" />
@@ -143,6 +147,9 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="..\.editorconfig">
+      <Link>.editorconfig</Link>
+    </None>
     <None Include="lua\config.json" />
     <None Include="lua\dkjson.lua" />
     <None Include="lua\qscallbacks.lua" />

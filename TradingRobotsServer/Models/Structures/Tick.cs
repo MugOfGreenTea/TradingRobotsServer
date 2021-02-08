@@ -5,7 +5,7 @@ namespace TradingRobotsServer.Models.Structures
 {
     public class Tick : StockData
     {
-        private decimal Price { get; set; }
+        public decimal Price { get; set; }
 
         public Tick(string sec_code, string class_code, CandleInterval interval, decimal price)
         {
