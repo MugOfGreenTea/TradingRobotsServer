@@ -1,4 +1,5 @@
 ﻿using QuikSharp.DataStructures;
+using QuikSharp.DataStructures.Transaction;
 using System.Collections.Generic;
 
 namespace TradingRobotsServer.Models.Structures
@@ -14,11 +15,18 @@ namespace TradingRobotsServer.Models.Structures
         public int PerVol { get; set; }
         public int LastVol { get; set; }
 
-        public List<OrderInfo> Orders { get; set; }
+        public List<OrderInfo> OrdersInfo { get; set; }
+        public List<OrderInfo> StopOrdersInfo { get; set; }
+
+        public List<Order> Orders { get; set; }
+        public List<StopOrder> StopOrders { get; set; }
 
         public Deal()
         {
-            Orders = new List<OrderInfo>();
+            OrdersInfo = new List<OrderInfo>();
+            StopOrdersInfo = new List<OrderInfo>();
+            Orders = new List<Order>();
+            StopOrders = new List<StopOrder>();
         }
 
         public Deal(TrendDataPoint trade_entry_point, TrendDataPoint signal_point, StatusDeal status, Operation operation, int vol)
@@ -30,7 +38,10 @@ namespace TradingRobotsServer.Models.Structures
             Vol += vol;
             PerVol += vol;
 
-            Orders = new List<OrderInfo>();
+            OrdersInfo = new List<OrderInfo>();
+            StopOrdersInfo = new List<OrderInfo>();
+            Orders = new List<Order>();
+            StopOrders = new List<StopOrder>();
         }
     }
 }

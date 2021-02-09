@@ -15,6 +15,8 @@ namespace TradingRobotsServer.Models.Logic
 {
     public class SetPositionByCandleHighLowStrategy : Strategy
     {
+        #region Переменные стратегии
+
         public int Window { get; set; }
         public int CandlesViewed { get; set; }
         decimal Indent { get; set; }
@@ -27,7 +29,15 @@ namespace TradingRobotsServer.Models.Logic
         public bool LookLong;
         public bool LookShort;
 
+        #endregion
+
+        #region События
+
         public override event OnNewOrder NewOrder;
+
+        #endregion
+
+        #region Главные методы
 
         public SetPositionByCandleHighLowStrategy(int window, int candles_viewed, decimal indent, TimeSpan not_trading_time_morning, TimeSpan not_trading_time_night, bool look_long, bool look_short, Bot bot)
         {
@@ -57,6 +67,25 @@ namespace TradingRobotsServer.Models.Logic
             Extremums = new List<(Candle, Extremum)>();
         }
 
+        private void GetParam(string param)
+        {
+            string[] separated_param = param.Split(new char[] { ';' });
+            string[] separated_time_morning = separated_param[3].Split(new char[] { ',' });
+            string[] separated_time_night = separated_param[4].Split(new char[] { ',' });
+
+            Window = Convert.ToInt32(separated_param[0]);
+            CandlesViewed = Convert.ToInt32(separated_param[1]);
+            Indent = Convert.ToDecimal(separated_param[2], new NumberFormatInfo() { NumberDecimalSeparator = "." });
+            NotTradingTimeMorning = new TimeSpan(Convert.ToInt32(separated_time_morning[0]), Convert.ToInt32(separated_time_morning[1]), Convert.ToInt32(separated_time_morning[1]));
+            NotTradingTimeNight = new TimeSpan(Convert.ToInt32(separated_time_night[0]), Convert.ToInt32(separated_time_night[1]), Convert.ToInt32(separated_time_night[1]));
+            LookLong = Convert.ToBoolean(separated_param[5]);
+            LookShort = Convert.ToBoolean(separated_param[6]);
+        }
+
+        #endregion
+
+        #region Обработка свеч
+
         public override void AnalysisCandle(Candle candle)
         {
             if (Candles.Count != 0 && Candles.Count >= Window * CandlesViewed)
@@ -66,11 +95,7 @@ namespace TradingRobotsServer.Models.Logic
             DebugLog("1 Новая свеча " + candle.ToString());
 
             FindExtremums();
-            CreateDeal();
         }
-
-        private decimal level_last_extremum_max;
-        private decimal level_last_extremum_min;
 
         private void FindExtremums()
         {
@@ -158,44 +183,50 @@ namespace TradingRobotsServer.Models.Logic
             }
         }
 
-        private void CreateDeal()
-        {
+        #endregion
 
-        }
+        #region Обработка тиков
 
+        DateTime temp_time = new DateTime(2021, 2, 9, 18, 38, 0);
         public override void AnalysisTick(Tick tick)
         {
             if (Candles.Count == 0)
                 return;
 
-            DateTime temp_nottradingtimemorning = new DateTime(Candles.Last().DateTime.Year, Candles.Last().DateTime.Month, Candles.Last().DateTime.Day, NotTradingTimeMorning.Hours, NotTradingTimeMorning.Minutes, NotTradingTimeMorning.Seconds);
-            DateTime temp_nottradingtimenight = new DateTime(Candles.Last().DateTime.Year, Candles.Last().DateTime.Month, Candles.Last().DateTime.Day, NotTradingTimeNight.Hours, NotTradingTimeNight.Minutes, NotTradingTimeNight.Seconds);
-            if (Candles.Last().DateTime <= temp_nottradingtimemorning)
-                return;
-            if (Candles.Last().DateTime >= temp_nottradingtimenight)
-                return;
-            if (Extremums.Count == 0)
-                return;
+            #region
+            //DateTime temp_nottradingtimemorning = new DateTime(Candles.Last().DateTime.Year, Candles.Last().DateTime.Month, Candles.Last().DateTime.Day, NotTradingTimeMorning.Hours, NotTradingTimeMorning.Minutes, NotTradingTimeMorning.Seconds);
+            //DateTime temp_nottradingtimenight = new DateTime(Candles.Last().DateTime.Year, Candles.Last().DateTime.Month, Candles.Last().DateTime.Day, NotTradingTimeNight.Hours, NotTradingTimeNight.Minutes, NotTradingTimeNight.Seconds);
+            //if (Candles.Last().DateTime <= temp_nottradingtimemorning)
+            //    return;
+            //if (Candles.Last().DateTime >= temp_nottradingtimenight)
+            //    return;
+            //if (Extremums.Count == 0)
+            //    return;
 
-            (Candle, Extremum) last_extremum = FindLastExtremum(Extremum.Max);
+            //(Candle, Extremum) last_extremum = FindLastExtremum(Extremum.Max);
 
-            if (last_extremum.Item2 == Extremum.Max && last_extremum.Item1.ID > Candles.Count - Window)
+            //if (last_extremum.Item2 == Extremum.Max && last_extremum.Item1.ID > Candles.Count - Window)
+            //{
+            //    if (tick.Price > last_extremum.Item1.High + Indent)
+            //    {
+            //        Debug.WriteLine("Попытка открыть сделку в LONG");
+            //        //PlacingOrders(last_extremum, tick.Price, Operation.Buy);
+            //    }
+            //}
+            //else if (last_extremum.Item2 == Extremum.Min && last_extremum.Item1.ID > Candles.Count - Window)
+            //{
+            //    if (tick.Price < last_extremum.Item1.Low - Indent)
+            //    {
+            //        Debug.WriteLine("Попытка открыть сделку в SHORT");
+            //        //PlacingOrders(last_extremum, tick.Price, Operation.Sell);
+            //    }
+            //}
+            #endregion
+            if (DateTime.Now.Minute == temp_time.Minute)
             {
-                if (tick.Price > last_extremum.Item1.High + Indent)
-                {
-                    PlacingOrders(last_extremum, tick.Price, Operation.Buy);
-                }
-            }
-            else if (last_extremum.Item2 == Extremum.Min && last_extremum.Item1.ID > Candles.Count - Window)
-            {
-                if (tick.Price < last_extremum.Item1.Low - Indent)
-                {
-                    PlacingOrders(last_extremum, tick.Price, Operation.Sell);
-                }
+                PlacingOrderTemp(tick.Price, Operation.Buy, temp_time);
             }
         }
-
-        #region
 
         private void PlacingOrders((Candle, Extremum) last_extremum, decimal price, Operation operation)
         {
@@ -207,30 +238,61 @@ namespace TradingRobotsServer.Models.Logic
             List<OrderInfo> new_order = new List<OrderInfo>();
             new_order.Add(new OrderInfo(TypeOrder.LimitOrder, price, 3, operation));
 
+            List<OrderInfo> new_stop_order = new List<OrderInfo>();
             decimal stoploss = FindStopLossMaxMin(price, Window, operation);
-            new_order.Add(new OrderInfo(TypeOrder.StopLimit, stoploss, 3, ReverseEnum(operation)));
+            new_stop_order.Add(new OrderInfo(TypeOrder.StopLimit, stoploss, 3, ReverseOperation(operation)));
 
             (decimal, decimal, decimal) profits = CalculationTakeProfits(price, stoploss, operation);
-            new_order.Add(new OrderInfo(TypeOrder.TakeProfit, profits.Item1, 1, ReverseEnum(operation)));
-            new_order.Add(new OrderInfo(TypeOrder.TakeProfit, profits.Item2, 1, ReverseEnum(operation)));
-            new_order.Add(new OrderInfo(TypeOrder.TakeProfit, profits.Item3, 1, ReverseEnum(operation)));
+            new_stop_order.Add(new OrderInfo(TypeOrder.TakeProfit, profits.Item1, 1, ReverseOperation(operation)));
+            new_stop_order.Add(new OrderInfo(TypeOrder.TakeProfit, profits.Item2, 1, ReverseOperation(operation)));
+            new_stop_order.Add(new OrderInfo(TypeOrder.TakeProfit, profits.Item3, 1, ReverseOperation(operation)));
 
-            temp_deal.Orders.AddRange(new_order);
+            temp_deal.OrdersInfo.AddRange(new_order);
+            temp_deal.StopOrdersInfo.AddRange(new_stop_order);
 
             NewOrder?.Invoke(temp_deal);
-            Debug.WriteLine("Сработало событие нового ордера");
-            Debug.WriteLine("price: " + price);
-            Debug.WriteLine("stoploss: " + stoploss);
-            Debug.WriteLine("takeprofit 1: " + profits.Item1);
-            Debug.WriteLine("takeprofit 2: " + profits.Item2);
-            Debug.WriteLine("takeprofit 3: " + profits.Item3);
+            Debug.WriteLine("Strategy: Сработало событие нового ордера");
+        }
+
+        private void PlacingOrderTemp(decimal price, Operation operation, DateTime time)
+        {
+            Deal temp_deal = new Deal();
+            temp_deal.SignalPoint = new TrendDataPoint(-1, 270, time);
+            temp_deal.Status = StatusDeal.WaitingOpen;
+            temp_deal.Operation = operation;
+
+            price -= 0.02m;
+
+            List<OrderInfo> new_order = new List<OrderInfo>();
+            new_order.Add(new OrderInfo(TypeOrder.LimitOrder, price, 3, operation));
+
+            temp_deal.OrdersInfo.AddRange(new_order);
+
+            NewOrder?.Invoke(temp_deal);
+            Debug.WriteLine("Strategy: Сработало событие нового ордера");
+        }
+
+        public override List<OrderInfo> PlacingStopOrder(decimal price, Operation operation)
+        {
+            List<OrderInfo> new_stop_order = new List<OrderInfo>();
+            decimal stoploss = price - 0.5m; /*FindStopLossMaxMin(price, Window, operation);*/
+            new_stop_order.Add(new OrderInfo(TypeOrder.StopLimit, stoploss, 3, ReverseOperation(operation)));
+
+            (decimal, decimal, decimal) profits = CalculationTakeProfits(price, stoploss, operation);
+            new_stop_order.Add(new OrderInfo(TypeOrder.TakeProfit, profits.Item1, 1, ReverseOperation(operation)));
+            new_stop_order.Add(new OrderInfo(TypeOrder.TakeProfit, profits.Item2, 1, ReverseOperation(operation)));
+            new_stop_order.Add(new OrderInfo(TypeOrder.TakeProfit, profits.Item3, 1, ReverseOperation(operation)));
+
+            Debug.WriteLine("Strategy: Сработало событие нового стоп-ордера");
+
+            return new_stop_order;
         }
 
         private (Candle, Extremum) FindLastExtremum(Extremum extremum)
         {
-            for (int i = Extremums.Count-1; i >= 0; i--)
+            for (int i = Extremums.Count - 1; i >= 0; i--)
             {
-                if(Extremums[i].Item2 == extremum)
+                if (Extremums[i].Item2 == extremum)
                 {
                     return Extremums[i];
                 }
@@ -295,22 +357,15 @@ namespace TradingRobotsServer.Models.Logic
                 return (T)(object)0;
         }
 
-        #endregion
-
-        private void GetParam(string param)
+        public Operation ReverseOperation(Operation operation)
         {
-            string[] separated_param = param.Split(new char[] { ';' });
-            string[] separated_time_morning = separated_param[3].Split(new char[] { ',' });
-            string[] separated_time_night = separated_param[4].Split(new char[] { ',' });
-
-            Window = Convert.ToInt32(separated_param[0]);
-            CandlesViewed = Convert.ToInt32(separated_param[1]);
-            Indent = Convert.ToDecimal(separated_param[2], new NumberFormatInfo() { NumberDecimalSeparator = "." });
-            NotTradingTimeMorning = new TimeSpan(Convert.ToInt32(separated_time_morning[0]), Convert.ToInt32(separated_time_morning[1]), Convert.ToInt32(separated_time_morning[1]));
-            NotTradingTimeNight = new TimeSpan(Convert.ToInt32(separated_time_night[0]), Convert.ToInt32(separated_time_night[1]), Convert.ToInt32(separated_time_night[1]));
-            LookLong = Convert.ToBoolean(separated_param[5]);
-            LookShort = Convert.ToBoolean(separated_param[6]);
+            if (operation == Operation.Buy)
+                return Operation.Sell;
+            else
+                return Operation.Buy;
         }
+
+        #endregion
 
         #region Лог
 

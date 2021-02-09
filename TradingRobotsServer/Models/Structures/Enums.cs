@@ -41,7 +41,7 @@ namespace TradingRobotsServer.Models.Structures
         Closed,
         ClosedPrematurely
     }
-    public enum StatusOrder
+    public enum StatusOrder : byte
     {
         Null,
         Active,

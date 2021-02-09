@@ -27,6 +27,7 @@ namespace TradingRobotsServer.Models
         bool check_subscribe_futures_client_holding; //проверка подписки на событие изменения позиции на срочном рынке
         bool check_subscribe_depo_limit; //проверка подписки на изменение лимита по бумагам
         bool check_subscribe_stoplimit; //проверка подписки на получение изменений позиции в стоп-заявках
+        bool check_subscribe_trade;//проверка подписки на получение информации о новой сделке
 
         #endregion
 
@@ -58,6 +59,7 @@ namespace TradingRobotsServer.Models
                 check_subscribe_futures_client_holding = quik_connect.SubscribeOnFuturesClientHolding();
                 check_subscribe_depo_limit = quik_connect.SubscribeOnDepoLimit();
                 check_subscribe_stoplimit = quik_connect.SubscribeOnStopOrder();
+                //check_subscribe_trade = quik_connect.SubscribeOnTrade();
 
                 Tool.SubscribeNewCandle();//подписка Tool на новые свечи от QuikConnect
             }
@@ -76,13 +78,14 @@ namespace TradingRobotsServer.Models
 
             Bot = new Bot(quik_connect, Tool, Strategy);
             Bot.SubsribeNewDataTool();//подписка Bot на новые свечи от Tool
-            Bot.SubsribeNewOrderStrategy();
+            Bot.SubsribeNewOrderStrategy();//подписка Bot на новые заявки от Strategy
+            Bot.SubsribeOnOrder();
         }
 
         private void StartTimer()
         {
             Timer = new Timer();
-            Timer.Interval = 200;
+            Timer.Interval = 10000;
             Timer.Elapsed += CallLastPrice;
             Timer.Start();
         }
