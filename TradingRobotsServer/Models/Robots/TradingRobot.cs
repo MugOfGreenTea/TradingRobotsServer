@@ -58,8 +58,6 @@ namespace TradingRobotsServer.Models
                 check_subscribe_candles = quik_connect.SubscribeReceiveCandles();
                 check_subscribe_futures_client_holding = quik_connect.SubscribeOnFuturesClientHolding();
                 check_subscribe_depo_limit = quik_connect.SubscribeOnDepoLimit();
-                check_subscribe_stoplimit = quik_connect.SubscribeOnStopOrder();
-                //check_subscribe_trade = quik_connect.SubscribeOnTrade();
 
                 Tool.SubscribeNewCandle();//подписка Tool на новые свечи от QuikConnect
             }
@@ -68,7 +66,7 @@ namespace TradingRobotsServer.Models
         private void RunStrategy(string param)
         {
             if (check_subscribe_tool_candles && check_subscribe_candles && check_subscribe_orderbook
-                    && check_subscribe_futures_client_holding && check_subscribe_depo_limit && check_subscribe_stoplimit)
+                    && check_subscribe_futures_client_holding && check_subscribe_depo_limit/* && check_subscribe_stoplimit*/)
             {
                 Thread = new Thread(new ThreadStart(StartTimer));
                 Thread.Start();
@@ -79,7 +77,9 @@ namespace TradingRobotsServer.Models
             Bot = new Bot(quik_connect, Tool, Strategy);
             Bot.SubsribeNewDataTool();//подписка Bot на новые свечи от Tool
             Bot.SubsribeNewOrderStrategy();//подписка Bot на новые заявки от Strategy
+            Bot.SubsribeOnTrade();
             Bot.SubsribeOnOrder();
+            Bot.SubscribeOnStopOrder();
         }
 
         private void StartTimer()

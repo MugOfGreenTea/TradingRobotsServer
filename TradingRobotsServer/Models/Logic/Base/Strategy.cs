@@ -18,6 +18,8 @@ namespace TradingRobotsServer.Models.Logic.Base
 
         public abstract void AnalysisCandle(Candle candle);
         public abstract void AnalysisTick(Tick tick);
+        public abstract void PlacingOrders((Candle, Extremum) last_extremum, decimal price, Operation operation);
         public abstract List<OrderInfo> PlacingStopOrder(decimal price, Operation operation);
+        public abstract OrderInfo RecalculateStop(decimal price, Operation operation);
     }
 }

@@ -19,14 +19,14 @@ namespace TradingRobotsServer.Models.Structures
         public List<OrderInfo> StopOrdersInfo { get; set; }
 
         public List<Order> Orders { get; set; }
-        public List<StopOrder> StopOrders { get; set; }
+        public List<(StopOrder, Order)> StopOrders { get; set; }
 
         public Deal()
         {
             OrdersInfo = new List<OrderInfo>();
             StopOrdersInfo = new List<OrderInfo>();
             Orders = new List<Order>();
-            StopOrders = new List<StopOrder>();
+            StopOrders = new List<(StopOrder, Order)>();
         }
 
         public Deal(TrendDataPoint trade_entry_point, TrendDataPoint signal_point, StatusDeal status, Operation operation, int vol)
@@ -41,7 +41,7 @@ namespace TradingRobotsServer.Models.Structures
             OrdersInfo = new List<OrderInfo>();
             StopOrdersInfo = new List<OrderInfo>();
             Orders = new List<Order>();
-            StopOrders = new List<StopOrder>();
+            StopOrders = new List<(StopOrder, Order)>();
         }
     }
 }

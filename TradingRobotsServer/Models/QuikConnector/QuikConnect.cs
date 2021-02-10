@@ -183,6 +183,70 @@ namespace TradingRobotsServer.Models.QuikConnector
 
         #endregion
 
+        #region Таблицы
+
+        /// <summary>
+        /// Возвращает таблицу сделок.
+        /// </summary>
+        /// <returns></returns>
+        public List<Trade> GetTradesTable()
+        {
+            try
+            {
+                DebugLog("Получаем таблицу сделок...");
+                List<Trade> trades = quik.Trading.GetTrades().Result;
+                DebugLog("Таблица сделок получена.");
+                return trades;
+            }
+            catch 
+            {
+                DebugLog("Ошибка получения сделок.");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Возвращает таблицу заявок.
+        /// </summary>
+        /// <returns></returns>
+        public List<Order> GetOrdersTable()
+        {
+            try
+            {
+                DebugLog("Получаем таблицу заявок...");
+                List<Order> orders = quik.Orders.GetOrders().Result;
+                DebugLog("Таблица заявок получена.");
+                return orders;
+            }
+            catch
+            {
+                DebugLog("Ошибка получения заявок.");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Возвращает таблицу стоп-заявок.
+        /// </summary>
+        /// <returns></returns>
+        public List<StopOrder> GetStopOrdersTable()
+        {
+            try
+            {
+                DebugLog("Получаем таблицу заявок...");
+                List<StopOrder> stoporders = quik.StopOrders.GetStopOrders().Result;
+                DebugLog("Таблица заявок получена.");
+                return stoporders;
+            }
+            catch
+            {
+                DebugLog("Ошибка получения заявок.");
+                return null;
+            }
+        }
+
+        #endregion
+
         #region Подписки
 
         /// <summary>
@@ -252,33 +316,6 @@ namespace TradingRobotsServer.Models.QuikConnector
             catch
             {
                 DebugLog("Подписка на получения изменений лимита по бумагам (OnDepoLimit) не удалась.");
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Подписка инструмента на получение свеч.
-        /// </summary>
-        /// <param name="timeframe"></param>
-        /// <returns></returns>
-        public bool SubscribeToolReceiveCandles(ref Tools Tools, int index_tool, CandleInterval timeframe)
-        {
-            try
-            {
-                while (!Tools[index_tool].isSubscribedToolCandles)
-                {
-                    DebugLog($"Подписываем инструмент {Tools[index_tool].SecurityCode} на получение свеч: " + Tools[index_tool].ClassCode + " | " + Tools[index_tool].SecurityCode + " | " + timeframe + "...");
-                    quik.Candles.Subscribe(Tools[index_tool].ClassCode, Tools[index_tool].SecurityCode, timeframe).Wait();
-
-                    DebugLog("Проверяем состояние подписки...");
-                    Tools[index_tool].isSubscribedToolCandles = quik.Candles.IsSubscribed(Tools[index_tool].ClassCode, Tools[index_tool].SecurityCode, timeframe).Result;
-                }
-                DebugLog("Подписка включена...");
-                return true;
-            }
-            catch
-            {
-                DebugLog("Подписка инструмента на получение свеч не удалась.");
                 return false;
             }
         }
@@ -434,17 +471,20 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// <param name="stoporder"></param>
         private void OnStopOrderDo(StopOrder stoporder)
         {
+            DebugLog("Вызвано событие OnStopOrder - 'Time' = " + DateTime.Now + ", 'OrderNum' = " + stoporder.OrderNum + ", 'State' = " + stoporder.State);
+            DebugLog("Вызвано событие OnStopOrder - связ. заявка: " + stoporder.LinkedOrder);
             try
             {
                 if (stoporder != null && stoporder.OrderNum > 0)
                 {
-                    Trace.WriteLine("Trace: Вызвано событие OnStopOrder - 'Time' = " + DateTime.Now + ", 'OrderNum' = " + stoporder.OrderNum + ", 'State' = " + stoporder.State);
+                    //Trace.WriteLine("Trace: Вызвано событие OnStopOrder - 'Time' = " + DateTime.Now + ", 'OrderNum' = " + stoporder.OrderNum + ", 'State' = " + stoporder.State);
                     DebugLog("Вызвано событие OnStopOrder - 'Time' = " + DateTime.Now + ", 'OrderNum' = " + stoporder.OrderNum + ", 'State' = " + stoporder.State);
+                    DebugLog("Вызвано событие OnStopOrder - связ. заявка: " + stoporder.LinkedOrder);
                 }
             }
             catch (Exception er)
             {
-                Trace.WriteLine("Trace: Ошибка в OnStopOrderDo() - " + er.ToString());
+                //Trace.WriteLine("Trace: Ошибка в OnStopOrderDo() - " + er.ToString());
                 DebugLog("Trace: Ошибка в OnStopOrderDo() - " + er.ToString());
             }
         }
@@ -488,7 +528,7 @@ namespace TradingRobotsServer.Models.QuikConnector
                     Thread.Sleep(500);
                     try
                     {
-                        List<Order> Orders = quik.Orders.GetOrders().Result;
+                        List<Order> Orders = GetOrdersTable();
                         foreach (Order order in Orders)
                         {
                             if (order.TransID == transactionID && order.ClassCode == Tool.ClassCode && order.SecCode == Tool.SecurityCode)
@@ -507,7 +547,7 @@ namespace TradingRobotsServer.Models.QuikConnector
                     }
                     catch
                     {
-                        DebugLog("Ошибка получения номера заявки.");
+                        DebugLog("Ошибка получения таблицы заявок.");
                         return null;
                     }
                 }
@@ -545,7 +585,7 @@ namespace TradingRobotsServer.Models.QuikConnector
                     Thread.Sleep(500);
                     try
                     {
-                        List<Order> Orders = quik.Orders.GetOrders().Result;
+                        List<Order> Orders = GetOrdersTable();
                         foreach (Order order in Orders)
                         {
                             if (order.TransID == transactionID && order.ClassCode == Tool.ClassCode && order.SecCode == Tool.SecurityCode)
@@ -564,7 +604,7 @@ namespace TradingRobotsServer.Models.QuikConnector
                     }
                     catch
                     {
-                        DebugLog("Ошибка получения номера заявки.");
+                        DebugLog("Ошибка получения таблицы заявок.");
                         return null;
                     }
                 }
@@ -632,7 +672,7 @@ namespace TradingRobotsServer.Models.QuikConnector
                     Thread.Sleep(500);
                     try
                     {
-                        List<StopOrder> StopOrders = quik.StopOrders.GetStopOrders().Result;
+                        List<StopOrder> StopOrders = GetStopOrdersTable();
                         foreach (StopOrder stoporder in StopOrders)
                         {
                             if (stoporder.TransId == transID && stoporder.ClassCode == Tool.ClassCode && stoporder.SecCode == Tool.SecurityCode)
@@ -643,7 +683,7 @@ namespace TradingRobotsServer.Models.QuikConnector
                     }
                     catch
                     {
-                        DebugLog("Ошибка получения номера стоп-заявки.");
+                        DebugLog("Ошибка получения таблицы стоп-заявок.");
                     }
                 }
                 else
@@ -706,7 +746,7 @@ namespace TradingRobotsServer.Models.QuikConnector
                     Thread.Sleep(500);
                     try
                     {
-                        List<StopOrder> StopOrders = quik.StopOrders.GetStopOrders().Result;
+                        List<StopOrder> StopOrders = GetStopOrdersTable();
                         foreach (StopOrder stoporder in StopOrders)
                         {
                             if (stoporder.TransId == transID && stoporder.ClassCode == Tool.ClassCode && stoporder.SecCode == Tool.SecurityCode)
@@ -719,7 +759,7 @@ namespace TradingRobotsServer.Models.QuikConnector
                     }
                     catch
                     {
-                        DebugLog("Ошибка получения номера стоп-заявки.");
+                        DebugLog("Ошибка получения таблицы стоп-заявок.");
                         return null;
                     }
                 }
@@ -785,7 +825,7 @@ namespace TradingRobotsServer.Models.QuikConnector
                     Thread.Sleep(500);
                     try
                     {
-                        List<StopOrder> StopOrders = quik.StopOrders.GetStopOrders().Result;
+                        List<StopOrder> StopOrders = GetStopOrdersTable();
                         foreach (StopOrder stoporder in StopOrders)
                         {
                             if (stoporder.TransId == transID && stoporder.ClassCode == Tool.ClassCode && stoporder.SecCode == Tool.SecurityCode)
@@ -798,7 +838,7 @@ namespace TradingRobotsServer.Models.QuikConnector
                     }
                     catch
                     {
-                        DebugLog("Ошибка получения номера стоп-заявки.");
+                        DebugLog("Ошибка получения таблицы стоп-заявок.");
                         return null;
                     }
                 }
@@ -824,7 +864,7 @@ namespace TradingRobotsServer.Models.QuikConnector
         {
             try
             {
-                List<Order> Orders = quik.Orders.GetOrders().Result;
+                List<Order> Orders = GetOrdersTable();
                 int index_order = Orders.FindIndex(o => o.OrderNum == id_order);
                 if (Orders[index_order] != null && Orders[index_order].OrderNum > 0)
                     DebugLog("Снимаем заявку на покупку с номером - " + Orders[index_order].OrderNum + "...");
@@ -846,7 +886,7 @@ namespace TradingRobotsServer.Models.QuikConnector
         {
             try
             {
-                List<StopOrder> StopOrders = quik.StopOrders.GetStopOrders().Result;
+                List<StopOrder> StopOrders = GetStopOrdersTable();
                 int index_order = StopOrders.FindIndex(o => o.OrderNum == id_order);
                 if (StopOrders[index_order] != null && StopOrders[index_order].OrderNum > 0) DebugLog("Снимаем стоп-заявку с номером - " + StopOrders[index_order].OrderNum + "...");
                 await quik.StopOrders.KillStopOrder(StopOrders[index_order]);
@@ -867,11 +907,7 @@ namespace TradingRobotsServer.Models.QuikConnector
             Debug.WriteLine(log_string);
             //mainWindow.Log += log_string + "\r\n";
         }
-        public static void DebugLogStats(string log_string)
-        {
-            Debug.WriteLine(log_string);
-            //mainWindow.Log += log_string + "\r\n";
-        }
+
         #endregion
     }
 }

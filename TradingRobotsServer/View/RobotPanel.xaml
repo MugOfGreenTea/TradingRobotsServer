@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:TradingRobotsServer"
         xmlns:vm="clr-namespace:TradingRobotsServer.ViewModels"
         mc:Ignorable="d"
-        Title="Profit Taker 3000" Height="834.757" Width="1558.348">
+        Title="Profit Taker 3000" Height="412.525" Width="1189.502">
     <Window.DataContext>
         <vm:RobotPanelViewModel/>
     </Window.DataContext>

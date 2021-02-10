@@ -5,6 +5,10 @@ using System.Diagnostics;
 using TradingRobotsServer.Models.Logic.Base;
 using TradingRobotsServer.Models.QuikConnector;
 using TradingRobotsServer.Models.Structures;
+using System.Threading;
+using StopOrder = QuikSharp.DataStructures.StopOrder;
+using System;
+using System.Linq;
 
 namespace TradingRobotsServer.Models.Logic
 {
@@ -23,6 +27,8 @@ namespace TradingRobotsServer.Models.Logic
             Strategy = strategy;
             Deals = new List<Deal>();
         }
+
+        #region Подписки
 
         /// <summary>
         /// Подписка на данные от инструмента.
@@ -47,24 +53,6 @@ namespace TradingRobotsServer.Models.Logic
         }
 
         /// <summary>
-        /// Обработчик события новой свечи.
-        /// </summary>
-        /// <param name="candle"></param>
-        public void NewCandle(Candle candle)
-        {
-            Strategy.AnalysisCandle(candle);
-        }
-
-        /// <summary>
-        /// Обработчик события нового тика.
-        /// </summary>
-        /// <param name="tick"></param>
-        public void NewTick(Tick tick)
-        {
-            Strategy.AnalysisTick(tick);
-        }
-
-        /// <summary>
         /// Подписка на получение информации о новой сделке.
         /// </summary>
         /// <returns></returns>
@@ -85,23 +73,7 @@ namespace TradingRobotsServer.Models.Logic
         }
 
         /// <summary>
-        /// Обработчик события получение информации о новой сделке.
-        /// </summary>
-        /// <param name="tick"></param>
-        private void OnTrade(Trade trade)
-        {
-            DebugLog("Произошло OnTrade.");
-            DebugLog("OrderNum - номер заявки: " + trade.OrderNum);
-            DebugLog("TradeNum - номер сделки." + trade.TradeNum);
-            DebugLog("price: " + trade.Price);
-            DebugLog("vol: " + trade.Quantity);
-            DebugLog("SettleCode - код расчетов: " + trade.SettleCode);
-            DebugLog("SecCode: " + trade.SecCode);
-            DebugLog("TransID: " + trade.TransID);
-        }
-
-        /// <summary>
-        /// Подписка на получение информации о новой заявке или изменения выставенной заявки.
+        /// Подписка на получение информации о новой заявке или изменения выставленной заявки.
         /// </summary>
         /// <returns></returns>
         public bool SubsribeOnOrder()
@@ -121,13 +93,80 @@ namespace TradingRobotsServer.Models.Logic
         }
 
         /// <summary>
+        /// Подписка на получение изменений позиции в стоп-заявках.
+        /// </summary>
+        /// <returns></returns>
+        public bool SubscribeOnStopOrder()
+        {
+            try
+            {
+                DebugLog("Подписываемся на изменение позиции в стоп-заявках...");
+                QuikConnecting.quik.Events.OnStopOrder += OnStopOrderDo;
+                DebugLog("Подписка включена...");
+                return true;
+            }
+            catch
+            {
+                DebugLog("Подписка на изменение позиции в стоп-заявках не удалась.");
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region Обработчики событий
+
+        #region Обработка новых данных
+
+        /// <summary>
+        /// Обработчик события новой свечи.
+        /// </summary>
+        /// <param name="candle"></param>
+        private void NewCandle(Candle candle)
+        {
+            Strategy.AnalysisCandle(candle);
+        }
+
+        /// <summary>
+        /// Обработчик события нового тика.
+        /// </summary>
+        /// <param name="tick"></param>
+        private void NewTick(Tick tick)
+        {
+            Strategy.AnalysisTick(tick);
+        }
+
+        #endregion
+
+        #region Обработка событий от Quik
+
+        /// <summary>
+        /// Обработчик события получение информации о новой сделке.
+        /// </summary>
+        /// <param name="tick"></param>
+        private void OnTrade(Trade trade)
+        {
+            DebugLog("Произошло OnTrade.");
+            DebugLog("OrderNum - номер заявки: " + trade.OrderNum);
+            DebugLog("TradeNum - номер сделки." + trade.TradeNum);
+            DebugLog("price: " + trade.Price);
+            DebugLog("vol: " + trade.Quantity);
+            DebugLog("SettleCode - код расчетов: " + trade.SettleCode);
+            DebugLog("SecCode: " + trade.SecCode);
+            DebugLog("TransID: " + trade.TransID);
+        }
+
+        /// <summary>
         /// Обработчик события получение информации о новой заявке или изменения выставенной заявки.
         /// </summary>
         /// <param name="tick"></param>
         private void OnOrder(Order order)
-        { 
+        {
+            Thread.Sleep(200);
             for (int i = 0; i < Deals.Count; i++)
             {
+                if (Deals[i].Orders.Count == 0)
+                    continue;                
                 for (int j = 0; j < Deals[i].Orders.Count; j++)
                 {
                     if (order.OrderNum == Deals[i].Orders[j].OrderNum)
@@ -141,7 +180,70 @@ namespace TradingRobotsServer.Models.Logic
                     }
                 }
             }
+
+            for (int i = 0; i < Deals.Count; i++)
+            {
+                if (Deals[i].StopOrders.Count == 0)
+                    continue;
+                for (int j = 0; j < Deals[i].StopOrders.Count; j++)
+                {
+                    if (order.OrderNum == Deals[i].StopOrders[j].Item2.OrderNum)
+                    {
+                        Deals[i].StopOrders[j] = (Deals[i].StopOrders[j].Item1, order);
+
+                        if (Deals[i].Orders[j].State == State.Completed)
+                        {
+                            SendStopOrders(i);
+                        }
+                    }
+                }
+            }
         }
+
+        /// <summary>
+        /// Обработчик события изменение позиции в стоп-заявках. 
+        /// </summary>
+        /// <param name="stoporder"></param>
+        private void OnStopOrderDo(StopOrder stoporder)
+        {
+            DebugLog("Вызвано событие OnStopOrder - 'Time' = " + DateTime.Now + ", 'OrderNum' = " + stoporder.OrderNum + ", 'State' = " + stoporder.State);
+            DebugLog("Вызвано событие OnStopOrder - связ. заявка: " + stoporder.LinkedOrder);
+
+            for (int i = 0; i < Deals.Count; i++)
+            {
+                if (Deals[i].Orders.Count == 0)
+                    continue;
+                for (int j = 0; j < Deals[i].Orders.Count; j++)
+                {
+                    if (stoporder.TransId == Deals[i].StopOrders[j].Item1.TransId)
+                    {
+                        Deals[i].StopOrders[j] = (stoporder, null);
+
+                        if (Deals[i].StopOrders[j].Item1.State == State.Completed)
+                        {
+                            Deals[i].StopOrders[j] = (stoporder, FindOrderFromStopOrder(stoporder.OrderNum));
+                        }
+                    }
+                }
+            }
+        }
+
+        private long temp_ordernum;
+        private Order FindOrderFromStopOrder(long order_num)
+        {
+            List<Order> listOrders = QuikConnecting.GetOrdersTable();
+            foreach (Order order in listOrders)
+            {
+                if(order.OrderNum == order_num)
+                    return order;
+            }
+
+            return null;
+        }
+
+        #endregion
+
+        #region Обработка сигналов от стратегии
 
         /// <summary>
         /// Обработчик события нового ордера.
@@ -166,7 +268,7 @@ namespace TradingRobotsServer.Models.Logic
         /// <summary>
         /// Проверка на повторяющиеся сделки.
         /// </summary>
-        public bool CheckDeal(Deal deal)
+        private bool CheckDeal(Deal deal)
         {
             check_closed_deal = true;
 
@@ -181,8 +283,12 @@ namespace TradingRobotsServer.Models.Logic
             return check_closed_deal;
         }
 
+        #endregion
+
+        #endregion
+
         /// <summary>
-        /// Исполнение ордеров.
+        /// Выставление ордеров.
         /// </summary>
         /// <param name="deal"></param>
         public void SendOrders(ref Deal deal)
@@ -195,9 +301,11 @@ namespace TradingRobotsServer.Models.Logic
                         break;
                     case TypeOrder.LimitOrder:
                         deal.Orders.Add(QuikConnecting.LimitOrder(Tool, order.Operation, order.Price, order.Vol).Result);
+                        deal.StopOrdersInfo.Last().State = State.Completed;
                         break;
                     case TypeOrder.MarketOrder:
                         deal.Orders.Add(QuikConnecting.MarketOrder(Tool, order.Operation, order.Vol).Result);
+                        deal.StopOrdersInfo.Last().State = State.Completed;
                         break;
                     default:
                         break;
@@ -206,7 +314,7 @@ namespace TradingRobotsServer.Models.Logic
         }
 
         /// <summary>
-        /// Исполнение стоп-ордеров.
+        /// Выставление стоп-ордеров.
         /// </summary>
         /// <param name="deal"></param>
         public void SendStopOrders(int i)
@@ -215,15 +323,19 @@ namespace TradingRobotsServer.Models.Logic
 
             foreach (OrderInfo stop_order in Deals[i].StopOrdersInfo)
             {
+                if (stop_order.State == State.Completed)
+                    continue;
                 switch (stop_order.TypeOrder)
                 {
                     case TypeOrder.Null:
                         break;
                     case TypeOrder.TakeProfit:
-                        Deals[i].StopOrders.Add(QuikConnecting.TakeProfitOrder(Tool, 0, 0, stop_order.Price, stop_order.Price, stop_order.Operation, stop_order.Vol).Result);
+                        Deals[i].StopOrders.Add((QuikConnecting.TakeProfitOrder(Tool, 0, 0, stop_order.Price, stop_order.Price, stop_order.Operation, stop_order.Vol).Result, null));
+                        Deals[i].StopOrdersInfo.Last().State = State.Completed;
                         break;
                     case TypeOrder.StopLimit:
-                        Deals[i].StopOrders.Add(QuikConnecting.StopLimitOrder(Tool, 0.5m, 0.1m, stop_order.Price, stop_order.Price, stop_order.Operation, stop_order.Vol).Result);
+                        Deals[i].StopOrders.Add((QuikConnecting.StopLimitOrder(Tool, 0.5m, 0.1m, stop_order.Price, stop_order.Price, stop_order.Operation, stop_order.Vol).Result, null));
+                        Deals[i].StopOrdersInfo.Last().State = State.Completed;
                         break;
                     case TypeOrder.TakeProfitAndStopLimit:
 
@@ -233,6 +345,36 @@ namespace TradingRobotsServer.Models.Logic
                 }
             }
         }
+
+        public void SendStopLoss(int i)
+        {
+            Deals[i].StopOrdersInfo.Add(Strategy.RecalculateStop(Deals[i].Orders[0].Price, Deals[i].Operation));
+
+            foreach (OrderInfo stop_order in Deals[i].StopOrdersInfo)
+            {
+                if (stop_order.State == State.Completed)
+                    continue;
+                switch (stop_order.TypeOrder)
+                {
+                    case TypeOrder.Null:
+                        break;
+                    case TypeOrder.TakeProfit:
+                        Deals[i].StopOrders.Add((QuikConnecting.TakeProfitOrder(Tool, 0, 0, stop_order.Price, stop_order.Price, stop_order.Operation, stop_order.Vol).Result, null));
+                        Deals[i].StopOrdersInfo.Last().State = State.Completed;
+                        break;
+                    case TypeOrder.StopLimit:
+                        Deals[i].StopOrders.Add((QuikConnecting.StopLimitOrder(Tool, 0.5m, 0.1m, stop_order.Price, stop_order.Price, stop_order.Operation, stop_order.Vol).Result, null));
+                        Deals[i].StopOrdersInfo.Last().State = State.Completed;
+                        break;
+                    case TypeOrder.TakeProfitAndStopLimit:
+
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
 
         #region Лог
 

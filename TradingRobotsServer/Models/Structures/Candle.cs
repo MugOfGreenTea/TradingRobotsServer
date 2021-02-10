@@ -7,12 +7,11 @@ using System.Threading.Tasks;
 
 namespace TradingRobotsServer.Models.Structures
 {
-    public class Candle : StockData
+    public class Candle : QuikSharp.DataStructures.Candle
     {
-        public decimal Open { get; set; }
-        public decimal Close { get; set; }
-        public decimal High { get; set; }
-        public decimal Low { get; set; }
+        public virtual int ID { get; set; }
+        public DateTime DateTime { get; set; }
+        public int Vol { get; set; }
         public TypeCandle TypeCandle { get; set; }
 
         public Candle(int id, string sec_code, string class_code, CandleInterval interval, DateTime dateTime,
