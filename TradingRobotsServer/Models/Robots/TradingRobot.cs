@@ -73,8 +73,10 @@ namespace TradingRobotsServer.Models
             }
 
             Strategy = new SetPositionByCandleHighLowStrategy(param, Bot);
-
             Bot = new Bot(quik_connect, Tool, Strategy);
+
+            Strategy.Bot = Bot;
+            Strategy.SubsribeNewDeal();
             Bot.SubsribeNewDataTool();//подписка Bot на новые свечи от Tool
             Bot.SubsribeNewOrderStrategy();//подписка Bot на новые заявки от Strategy
             Bot.SubsribeOnTrade();

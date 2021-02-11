@@ -95,7 +95,7 @@
     <Compile Include="Models\Logic\Base\Strategy.cs" />
     <Compile Include="Models\Logic\SetPositionByCandleHighLowStrategy.cs" />
     <Compile Include="Models\Structures\DataPoint.cs" />
-    <Compile Include="Models\Structures\Deal.cs" />
+    <Compile Include="Models\Logic\Deal.cs" />
     <Compile Include="Models\Structures\Enums.cs" />
     <Compile Include="Models\Structures\OrderInfo.cs" />
     <Compile Include="Models\Structures\StockData.cs" />

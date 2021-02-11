@@ -49,4 +49,15 @@ namespace TradingRobotsServer.Models.Structures
         PartiallyExecuted,
         Removed
     }
+    public enum Command
+    {
+        Null,
+        SendOrder,
+        SendStopLimitOrder,
+        SendTakeProfitOrder,
+        SendTakeProfitAndStopLimitOrder,
+        TakeOffOrder,
+        TakeOffStopLimitOrder,
+        TakeOffTakeProfitOrder
+    }
 }

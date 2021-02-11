@@ -537,11 +537,7 @@ namespace TradingRobotsServer.Models.QuikConnector
                                 return order;
                                 //Text2TextBox(textBoxOrderNumber, _order.OrderNum.ToString());
                             }
-                            else
-                            {
-                                return null;
-                                //Text2TextBox(textBoxOrderNumber, "---");
-                            }
+
                         }
                         return null;
                     }
@@ -594,11 +590,6 @@ namespace TradingRobotsServer.Models.QuikConnector
                                 //Text2TextBox(textBoxOrderNumber, order.OrderNum.ToString());
                                 return order;
                             }
-                            else
-                            {
-                                return null;
-                                //Text2TextBox(textBoxOrderNumber, "---");
-                            }
                         }
                         return null;
                     }
@@ -635,7 +626,7 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// <param name="offset_units"></param>
         /// <param name="spread_unit"></param>
         /// <returns></returns>
-        public async Task TakeProfitStotLimitOrder(Tool Tool, decimal offset, decimal spread,
+        public async Task<StopOrder> TakeProfitStotLimitOrder(Tool Tool, decimal offset, decimal spread,
             decimal takeprofit, decimal stoplimit, decimal price, Operation operation, int vol,
             OffsetUnits offset_units = OffsetUnits.PRICE_UNITS, OffsetUnits spread_unit = OffsetUnits.PRICE_UNITS)
         {
@@ -678,22 +669,27 @@ namespace TradingRobotsServer.Models.QuikConnector
                             if (stoporder.TransId == transID && stoporder.ClassCode == Tool.ClassCode && stoporder.SecCode == Tool.SecurityCode)
                             {
                                 DebugLog("Стоп-заявка выставлена. Номер стоп-заявки - " + stoporder.OrderNum);
+                                return stoporder;
                             }
                         }
+                        return null;
                     }
                     catch
                     {
                         DebugLog("Ошибка получения таблицы стоп-заявок.");
+                        return null;
                     }
                 }
                 else
                 {
                     DebugLog("Неудачная попытка выставления стоп-заявки.");
+                    return null;
                 }
             }
             catch
             {
                 DebugLog("Ошибка выставления стоп-заявки.");
+                return null;
             }
         }
 

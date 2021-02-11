@@ -6,6 +6,7 @@ namespace TradingRobotsServer.Models.Structures
 {
     public class Deal
     {
+        public int ID { get; set; }
         public TrendDataPoint TradeEntryPoint { get; set; }
         public TrendDataPoint ExitPoint { get; set; }
         public TrendDataPoint SignalPoint { get; set; }
@@ -16,17 +17,24 @@ namespace TradingRobotsServer.Models.Structures
         public int LastVol { get; set; }
 
         public List<OrderInfo> OrdersInfo { get; set; }
-        public List<OrderInfo> StopOrdersInfo { get; set; }
+        public List<OrderInfo> StopLimitOrdersInfo { get; set; }
+        public List<OrderInfo> TakeProfitOrdersInfo { get; set; }
+        public List<OrderInfo> TakeProfitAndStopLimitOrdersInfo { get; set; }
 
-        public List<Order> Orders { get; set; }
-        public List<(StopOrder, Order)> StopOrders { get; set; }
+        //public List<Order> Orders { get; set; }
+        //public List<(StopOrder, Order)> StopLimitOrders { get; set; }
+        //public List<(StopOrder, Order)> TakeProfitOrders { get; set; }
 
         public Deal()
         {
             OrdersInfo = new List<OrderInfo>();
-            StopOrdersInfo = new List<OrderInfo>();
-            Orders = new List<Order>();
-            StopOrders = new List<(StopOrder, Order)>();
+            StopLimitOrdersInfo = new List<OrderInfo>();
+            TakeProfitOrdersInfo = new List<OrderInfo>();
+            TakeProfitAndStopLimitOrdersInfo = new List<OrderInfo>();
+
+            //Orders = new List<Order>();
+            //StopLimitOrders = new List<(StopOrder, Order)>();
+            //TakeProfitOrders = new List<(StopOrder, Order)>();
         }
 
         public Deal(TrendDataPoint trade_entry_point, TrendDataPoint signal_point, StatusDeal status, Operation operation, int vol)
@@ -39,9 +47,13 @@ namespace TradingRobotsServer.Models.Structures
             PerVol += vol;
 
             OrdersInfo = new List<OrderInfo>();
-            StopOrdersInfo = new List<OrderInfo>();
-            Orders = new List<Order>();
-            StopOrders = new List<(StopOrder, Order)>();
+            StopLimitOrdersInfo = new List<OrderInfo>();
+            TakeProfitOrdersInfo = new List<OrderInfo>();
+            TakeProfitAndStopLimitOrdersInfo = new List<OrderInfo>();
+
+            //Orders = new List<Order>();
+            //StopLimitOrders = new List<(StopOrder, Order)>();
+            //TakeProfitOrders = new List<(StopOrder, Order)>();
         }
     }
 }
