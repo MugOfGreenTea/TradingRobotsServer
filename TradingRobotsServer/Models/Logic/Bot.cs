@@ -152,15 +152,21 @@ namespace TradingRobotsServer.Models.Logic
 
         }
 
+        private long temp_id_order = -1;
         /// <summary>
         /// Обработчик события получение информации о новой заявке или изменения выставенной заявки.
         /// </summary>
         /// <param name="tick"></param>
         private void OnOrder(Order order)
         {
-            Strategy.ProcessingExecutedOrders(order);
+            if (order.State == State.Completed && order.OrderNum != temp_id_order)
+            {
+                temp_id_order = order.OrderNum;
+                Strategy.ProcessingExecutedOrders(order);
+            }
         }
 
+        private long temp_id_stoporder = -1;
         /// <summary>
         /// Обработчик события изменение позиции в стоп-заявках. 
         /// </summary>
@@ -170,6 +176,8 @@ namespace TradingRobotsServer.Models.Logic
             DebugLog("Вызвано событие OnStopOrder - 'Time' = " + DateTime.Now + ", 'OrderNum' = " + stoporder.OrderNum + ", 'State' = " + stoporder.State);
             DebugLog("Вызвано событие OnStopOrder - связ. заявка: " + stoporder.LinkedOrder);
 
+            if (stoporder.State == State.Completed && stoporder.OrderNum != temp_id_stoporder)
+                Strategy.ProcessingExecutedStopOrders(stoporder);
         }
 
         private Order FindOrderFromStopOrder(long order_num)
@@ -215,8 +223,10 @@ namespace TradingRobotsServer.Models.Logic
                 case Command.TakeOffOrder:
                     break;
                 case Command.TakeOffStopLimitOrder:
+                    TakeOffStopLimitOrder(ref deal);
                     break;
                 case Command.TakeOffTakeProfitOrder:
+                    TakeOffTakeProfitOrder(ref deal);
                     break;
                 default:
                     break;
@@ -273,8 +283,6 @@ namespace TradingRobotsServer.Models.Logic
 
         private void SendStopLimitOrders(ref Deal deal)
         {
-            deal.StopLimitOrdersInfo.AddRange(Strategy.PlacingStopLimitOrder(deal));
-
             for (int i = 0; i < deal.StopLimitOrdersInfo.Count; i++)
             {
                 if (deal.StopLimitOrdersInfo[i].IssueStatus == State.Completed || deal.StopLimitOrdersInfo[i].IssueStatus == State.Canceled)
@@ -304,8 +312,6 @@ namespace TradingRobotsServer.Models.Logic
 
         private void SendTakeProfitOrders(ref Deal deal)
         {
-            deal.TakeProfitOrdersInfo.AddRange(Strategy.PlacingTakeProfitOrder(deal));
-
             for (int i = 0; i < deal.TakeProfitOrdersInfo.Count; i++)
             {
                 if (deal.TakeProfitOrdersInfo[i].IssueStatus == State.Completed || deal.TakeProfitOrdersInfo[i].IssueStatus == State.Canceled)
@@ -360,6 +366,28 @@ namespace TradingRobotsServer.Models.Logic
                         break;
                     default:
                         break;
+                }
+            }
+        }
+
+        private void TakeOffStopLimitOrder(ref Deal deal)
+        {
+            for (int i = 0; i < deal.StopLimitOrdersInfo.Count; i++)
+            {
+                if (deal.StopLimitOrdersInfo[i].ExecutionStatus == State.Canceled)
+                {
+                    QuikConnecting.TakeOffStopOrder(deal.StopLimitOrdersInfo[i].IDOrder);
+                }
+            }
+        }
+
+        private void TakeOffTakeProfitOrder(ref Deal deal)
+        {
+            for (int i = 0; i < deal.TakeProfitOrdersInfo.Count; i++)
+            {
+                if (deal.TakeProfitOrdersInfo[i].ExecutionStatus == State.Canceled)
+                {
+                    QuikConnecting.TakeOffStopOrder(deal.TakeProfitOrdersInfo[i].IDOrder);
                 }
             }
         }

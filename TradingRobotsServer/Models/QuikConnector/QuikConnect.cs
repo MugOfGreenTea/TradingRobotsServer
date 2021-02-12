@@ -461,8 +461,8 @@ namespace TradingRobotsServer.Models.QuikConnector
             //{
             //    Robot.Tool.AddNewCandle(new Structures.Candle(candle));
 
-            QuikDateTime temp = candle.Datetime;
-            DebugLog("Получена новая свеча из квика от: " + temp.day + "." + temp.month + "." + temp.year + " " + temp.hour + "-" + temp.min + "-" + temp.sec + ", значения: " + candle.ToString());
+            //QuikDateTime temp = candle.Datetime;
+            //DebugLog("Получена новая свеча из квика от: " + temp.day + "." + temp.month + "." + temp.year + " " + temp.hour + "-" + temp.min + "-" + temp.sec + ", значения: " + candle.ToString());
             //}
         }
         /// <summary>

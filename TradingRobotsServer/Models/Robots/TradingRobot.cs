@@ -87,7 +87,7 @@ namespace TradingRobotsServer.Models
         private void StartTimer()
         {
             Timer = new Timer();
-            Timer.Interval = 10000;
+            Timer.Interval = 200;
             Timer.Elapsed += CallLastPrice;
             Timer.Start();
         }

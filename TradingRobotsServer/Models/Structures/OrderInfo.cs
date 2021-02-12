@@ -12,27 +12,31 @@ namespace TradingRobotsServer.Models.Structures
         public Operation Operation;
         public State IssueStatus;
         public State ExecutionStatus;
+        public State IssueLinkedStatus;
+        public State ExecutionLinkedStatus;
         public long IDOrder;
         public long IDLinkedOrder;//id заявки связаной со стоп-заявкой
 
-        public OrderInfo(TypeOrder type, decimal price, int vol, Operation operation, State state)
+        public OrderInfo(TypeOrder type, decimal price, int vol, Operation operation, State issues_status, State execution_status)
         {
             TypeOrder = type;
             Price = price;
             Vol = vol;
             Operation = operation;
-            IssueStatus = state;
+            IssueStatus = issues_status;
+            ExecutionStatus = execution_status;
         }
-        public OrderInfo(TypeOrder type, decimal price, decimal price3, int vol, Operation operation, State state)
+        public OrderInfo(TypeOrder type, decimal price, decimal price3, int vol, Operation operation, State issues_status, State execution_status)
         {
             TypeOrder = type;
             Price = price;
             Price3 = price3;
             Vol = vol;
             Operation = operation;
-            IssueStatus = state;
+            IssueStatus = issues_status;
+            ExecutionStatus = execution_status;
         }
-        public OrderInfo(TypeOrder type, decimal price, decimal price2, decimal price3, int vol, Operation operation, State state)
+        public OrderInfo(TypeOrder type, decimal price, decimal price2, decimal price3, int vol, Operation operation, State issues_status, State execution_status)
         {
             TypeOrder = type;
             Price = price;
@@ -40,7 +44,8 @@ namespace TradingRobotsServer.Models.Structures
             Price3 = price3;
             Vol = vol;
             Operation = operation;
-            IssueStatus = state;
+            IssueStatus = issues_status;
+            ExecutionStatus = execution_status;
         }
     }
 }
