@@ -28,7 +28,7 @@ namespace TradingRobotsServer.Models.Logic.Base
         /// <param name="last_extremum"></param>
         /// <param name="price"></param>
         /// <param name="operation"></param>
-        public abstract void PlacingOrders((Candle, Extremum) last_extremum, decimal price, Operation operation);
+        public abstract void PlacingOrders((Candle, Extremum) last_extremum, decimal price, Operation operation, DateTime dateTime);
 
         /// <summary>
         /// Отправка стоп-лимитов.

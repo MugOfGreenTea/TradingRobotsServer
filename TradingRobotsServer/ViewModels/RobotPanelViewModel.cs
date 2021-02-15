@@ -49,7 +49,7 @@ namespace TradingRobotsServer.ViewModels
         #region - Локальные переменные
 
         private TradingRobot robot;
-
+        string param;
         #endregion
 
         #region - Обработчики событий формы
@@ -60,9 +60,25 @@ namespace TradingRobotsServer.ViewModels
         }
         private void On_Button_Execute(object obj)
         {
-            robot = new TradingRobot();
-            string param = "15;5;0.03;10,39,0;18,30,0;true;false";
-            robot.Run(Quik.DefaultPort, Quik.DefaultHost, "SBER", QuikSharp.DataStructures.CandleInterval.M1, param);
+            //TradingRobot robotRIH1 = new TradingRobot();
+            //param = "15;5;20;10,39,0;18,30,0;true;false";
+            //robotRIH1.Run(Quik.DefaultPort, Quik.DefaultHost, "RIH1", QuikSharp.DataStructures.CandleInterval.M1, param);
+
+            TradingRobot robotSiH1 = new TradingRobot();
+            param = "15;5;2;10,39,0;18,30,0;true;false";
+            robotSiH1.Run(Quik.DefaultPort, Quik.DefaultHost, "SiH1", QuikSharp.DataStructures.CandleInterval.M1, param);
+
+            TradingRobot robotSRH1 = new TradingRobot();
+            param = "15;5;2;10,39,0;18,30,0;true;false";
+            robotSRH1.Run(Quik.DefaultPort, Quik.DefaultHost, "SRH1", QuikSharp.DataStructures.CandleInterval.M1, param);
+
+            //TradingRobot robotVBH1 = new TradingRobot();
+            // param = "15;5;2;10,39,0;18,30,0;true;false";
+            //robotVBH1.Run(Quik.DefaultPort, Quik.DefaultHost, "VBH1", QuikSharp.DataStructures.CandleInterval.M1, param);
+
+            TradingRobot robotGZH1 = new TradingRobot();
+            param = "15;5;2;10,39,0;18,30,0;true;false";
+            robotGZH1.Run(Quik.DefaultPort, Quik.DefaultHost, "GZH1", QuikSharp.DataStructures.CandleInterval.M1, param);
 
         }
 

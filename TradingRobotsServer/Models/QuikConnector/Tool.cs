@@ -67,11 +67,31 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// </summary>
         public decimal Step => step;
 
-        private double guaranteeProviding;
+        private decimal guaranteeProvidingbuy;
         /// <summary>
-        /// Гарантийное обеспечение (только для срочного рынка) для фондовой секции = 0
+        /// Гарантийное обеспечение покупателя (только для срочного рынка) для фондовой секции = 0
         /// </summary>
-        public double GuaranteeProviding => guaranteeProviding;
+        public decimal GuaranteeProvidingBuy
+        {
+            get
+            {
+                guaranteeProvidingbuy = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.BUYDEPO).Result.ParamValue.Replace('.', separator));
+                return guaranteeProvidingbuy;
+            }
+        }
+
+        private decimal guaranteeProvidingsell;
+        /// <summary>
+        /// Гарантийное обеспечение продавца (только для срочного рынка) для фондовой секции = 0
+        /// </summary>
+        public decimal GuaranteeProvidingSell
+        {
+            get
+            {
+                guaranteeProvidingsell = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.SELLDEPO).Result.ParamValue.Replace('.', separator));
+                return guaranteeProvidingsell;
+            }
+        }
 
         private decimal priceStep;
         /// <summary>
@@ -87,7 +107,7 @@ namespace TradingRobotsServer.Models.QuikConnector
         {
             get
             {
-                lastPrice = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, "LAST").Result.ParamValue.Replace('.', separator));
+                lastPrice = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.LAST).Result.ParamValue.Replace('.', separator));
                 NewTick?.Invoke(new Tick(securityCode, classCode, interval, lastPrice));
                 return lastPrice;
             }
@@ -151,8 +171,8 @@ namespace TradingRobotsServer.Models.QuikConnector
                             name = quik.Class.GetSecurityInfo(classCode, securityCode).Result.ShortName;
                             accountID = quik.Class.GetTradeAccount(classCode).Result;
                             firmID = quik.Class.GetClassInfo(classCode).Result.FirmId;
-                            step = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, "SEC_PRICE_STEP").Result.ParamValue.Replace('.', separator));
-                            priceAccuracy = Convert.ToInt32(Convert.ToDouble(quik.Trading.GetParamEx(classCode, securityCode, "SEC_SCALE").Result.ParamValue.Replace('.', separator)));
+                            step = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.SEC_PRICE_STEP).Result.ParamValue.Replace('.', separator));
+                            priceAccuracy = Convert.ToInt32(Convert.ToDouble(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.SEC_SCALE).Result.ParamValue.Replace('.', separator)));
                         }
                         catch (Exception e)
                         {
@@ -163,17 +183,19 @@ namespace TradingRobotsServer.Models.QuikConnector
                         {
                             Console.WriteLine("Получаем 'guaranteeProviding'.");
                             lot = 1;
-                            guaranteeProviding = Convert.ToDouble(quik.Trading.GetParamEx(classCode, securityCode, "BUYDEPO").Result.ParamValue.Replace('.', separator));
+                            guaranteeProvidingbuy = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.BUYDEPO).Result.ParamValue.Replace('.', separator));
+                            guaranteeProvidingsell = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.SELLDEPO).Result.ParamValue.Replace('.', separator));
                         }
                         else
                         {
                             Console.WriteLine("Получаем 'lot'.");
-                            lot = Convert.ToInt32(Convert.ToDouble(quik.Trading.GetParamEx(classCode, securityCode, "LOTSIZE").Result.ParamValue.Replace('.', separator)));
-                            guaranteeProviding = 0;
+                            lot = Convert.ToInt32(Convert.ToDouble(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.LOTSIZE).Result.ParamValue.Replace('.', separator)));
+                            guaranteeProvidingbuy = 0;
+                            guaranteeProvidingsell = 0;
                         }
                         try
                         {
-                            priceStep = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, "STEPPRICET").Result.ParamValue.Replace('.', separator));
+                            priceStep = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.STEPPRICET).Result.ParamValue.Replace('.', separator));
                         }
                         catch (Exception e)
                         {
@@ -188,7 +210,7 @@ namespace TradingRobotsServer.Models.QuikConnector
                     {
                         Console.WriteLine("Tool.GetBaseParam. Ошибка: classCode не определен.");
                         lot = 0;
-                        guaranteeProviding = 0;
+                        guaranteeProvidingbuy = 0;
                     }
                 }
                 else
@@ -208,7 +230,7 @@ namespace TradingRobotsServer.Models.QuikConnector
 
         public decimal CallLastPrice()
         {
-            lastPrice = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, "LAST").Result.ParamValue.Replace('.', separator));
+            lastPrice = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.LAST).Result.ParamValue.Replace('.', separator));
             NewTick?.Invoke(new Tick(securityCode, classCode, interval, lastPrice));
             return lastPrice;
         }
@@ -233,7 +255,7 @@ namespace TradingRobotsServer.Models.QuikConnector
             if (Candles != null && candle.SecCode == SecurityCode && candle.ClassCode == ClassCode && candle.Interval == Interval)
             {
                 Candle temp_candle = new Candle(candle);
-                if (Candles.Count != 0 && Candles.Count >= 200)
+                if (Candles.Count != 0 && Candles.Count >= 1000)
                     candles.RemoveAt(0);
                 temp_candle.ID = Candles.Count;
                 candles.Add(temp_candle);

@@ -11,6 +11,8 @@ using TradingRobotsServer.Models.QuikConnector;
 using System.Diagnostics;
 using System.Globalization;
 using QuikSharp.DataStructures.Transaction;
+using TradingRobotsServer.Models.Support;
+using NLog;
 
 namespace TradingRobotsServer.Models.Logic
 {
@@ -29,6 +31,8 @@ namespace TradingRobotsServer.Models.Logic
         public override Bot Bot { get; set; }
         public bool LookLong;
         public bool LookShort;
+
+        private static Logger logger = LogManager.GetCurrentClassLogger();
 
         private List<Deal> Deals { get; set; }
 
@@ -119,13 +123,13 @@ namespace TradingRobotsServer.Models.Logic
                         if (Candles[index_quotation].TypeCandle == TypeCandle.Growing && Candles[index_quotation - 1].Close >= Candles[index_quotation].Close)
                         {
                             Extremums.Add((Candles[index_quotation - 1], Extremum.Max));
-                            Debug.WriteLine("Найден экстремум");
+                            DebugLog("Найден экстремум: " + Candles[index_quotation - 1].DateTime.ToString());
                             return;
                         }
                         if (Candles[index_quotation].TypeCandle == TypeCandle.Falling && Candles[index_quotation - 1].Close >= Candles[index_quotation].Open)
                         {
                             Extremums.Add((Candles[index_quotation - 1], Extremum.Max));
-                            Debug.WriteLine("Найден экстремум");
+                            DebugLog("Найден экстремум: " + Candles[index_quotation - 1].DateTime.ToString());
                             return;
                         }
                     }
@@ -135,13 +139,13 @@ namespace TradingRobotsServer.Models.Logic
                         if (Candles[index_quotation].TypeCandle == TypeCandle.Growing && Candles[index_quotation - 1].Open >= Candles[index_quotation].Close)
                         {
                             Extremums.Add((Candles[index_quotation - 1], Extremum.Max));
-                            Debug.WriteLine("Найден экстремум");
+                            DebugLog("Найден экстремум: " + Candles[index_quotation - 1].DateTime.ToString());
                             return;
                         }
                         if (Candles[index_quotation].TypeCandle == TypeCandle.Falling && Candles[index_quotation - 1].Open >= Candles[index_quotation].Open)
                         {
                             Extremums.Add((Candles[index_quotation - 1], Extremum.Max));
-                            Debug.WriteLine("Найден экстремум");
+                            DebugLog("Найден экстремум: " + Candles[index_quotation - 1].DateTime.ToString());
                             return;
                         }
                     }
@@ -154,13 +158,13 @@ namespace TradingRobotsServer.Models.Logic
                         if (Candles[index_quotation].TypeCandle == TypeCandle.Growing && Candles[index_quotation - 1].Open <= Candles[index_quotation].Open)
                         {
                             Extremums.Add((Candles[index_quotation - 1], Extremum.Min));
-                            Debug.WriteLine("Найден экстремум");
+                            DebugLog("Найден экстремум: " + Candles[index_quotation - 1].DateTime.ToString());
                             return;
                         }
                         if (Candles[index_quotation].TypeCandle == TypeCandle.Falling && Candles[index_quotation - 1].Open <= Candles[index_quotation].Close)
                         {
                             Extremums.Add((Candles[index_quotation - 1], Extremum.Min));
-                            Debug.WriteLine("Найден экстремум");
+                            DebugLog("Найден экстремум: " + Candles[index_quotation - 1].DateTime.ToString());
                             return;
                         }
                     }
@@ -170,13 +174,13 @@ namespace TradingRobotsServer.Models.Logic
                         if (Candles[index_quotation].TypeCandle == TypeCandle.Growing && Candles[index_quotation - 1].Close <= Candles[index_quotation].Open)
                         {
                             Extremums.Add((Candles[index_quotation - 1], Extremum.Min));
-                            Debug.WriteLine("Найден экстремум");
+                            DebugLog("Найден экстремум: " + Candles[index_quotation - 1].DateTime.ToString());
                             return;
                         }
                         if (Candles[index_quotation].TypeCandle == TypeCandle.Falling && Candles[index_quotation - 1].Close <= Candles[index_quotation].Close)
                         {
                             Extremums.Add((Candles[index_quotation - 1], Extremum.Min));
-                            Debug.WriteLine("Найден экстремум");
+                            DebugLog("Найден экстремум: " + Candles[index_quotation - 1].DateTime.ToString());
                             return;
                         }
                     }
@@ -197,6 +201,7 @@ namespace TradingRobotsServer.Models.Logic
         #region Обработка тиков
 
         DateTime temp_time = new DateTime(2021, 2, 12, 15, 39, 0);
+        private bool lock_tick = false;
         //Создание сделки и отправка обычной заявки
         public override void AnalysisTick(Tick tick)
         {
@@ -204,12 +209,13 @@ namespace TradingRobotsServer.Models.Logic
                 return;
 
             #region
-            DateTime temp_nottradingtimemorning = new DateTime(Candles.Last().DateTime.Year, Candles.Last().DateTime.Month, Candles.Last().DateTime.Day, NotTradingTimeMorning.Hours, NotTradingTimeMorning.Minutes, NotTradingTimeMorning.Seconds);
-            DateTime temp_nottradingtimenight = new DateTime(Candles.Last().DateTime.Year, Candles.Last().DateTime.Month, Candles.Last().DateTime.Day, NotTradingTimeNight.Hours, NotTradingTimeNight.Minutes, NotTradingTimeNight.Seconds);
-            if (Candles.Last().DateTime <= temp_nottradingtimemorning)
-                return;
-            if (Candles.Last().DateTime >= temp_nottradingtimenight)
-                return;
+
+            //DateTime temp_nottradingtimemorning = new DateTime(Candles.Last().DateTime.Year, Candles.Last().DateTime.Month, Candles.Last().DateTime.Day, NotTradingTimeMorning.Hours, NotTradingTimeMorning.Minutes, NotTradingTimeMorning.Seconds);
+            //DateTime temp_nottradingtimenight = new DateTime(Candles.Last().DateTime.Year, Candles.Last().DateTime.Month, Candles.Last().DateTime.Day, NotTradingTimeNight.Hours, NotTradingTimeNight.Minutes, NotTradingTimeNight.Seconds);
+            //if (Candles.Last().DateTime <= temp_nottradingtimemorning)
+            //    return;
+            //if (Candles.Last().DateTime >= temp_nottradingtimenight)
+            //    return;
             if (Extremums.Count == 0)
                 return;
 
@@ -217,21 +223,25 @@ namespace TradingRobotsServer.Models.Logic
 
             if (last_extremum.Item2 == Extremum.Max && last_extremum.Item1.ID > Candles.Last().ID - Window)
             {
-                if (tick.Price > last_extremum.Item1.High + Indent)
+                if (tick.Price > last_extremum.Item1.High + Indent && !lock_tick)
                 {
-                    Debug.WriteLine("Попытка открыть сделку в LONG");
-                    PlacingOrders(last_extremum, tick.Price, Operation.Buy);
+                    lock_tick = true;
+                    DebugLog("Попытка открыть сделку в LONG");
+                    PlacingOrders(last_extremum, tick.Price, Operation.Buy, tick.DateTime);
                 }
             }
             else if (last_extremum.Item2 == Extremum.Min && last_extremum.Item1.ID > Candles.Last().ID - Window)
             {
-                if (tick.Price < last_extremum.Item1.Low - Indent)
+                if (tick.Price < last_extremum.Item1.Low - Indent && !lock_tick)
                 {
-                    Debug.WriteLine("Попытка открыть сделку в SHORT");
-                    PlacingOrders(last_extremum, tick.Price, Operation.Sell);
+                    lock_tick = true;
+                    DebugLog("Попытка открыть сделку в SHORT");
+                    PlacingOrders(last_extremum, tick.Price, Operation.Sell, tick.DateTime);
                 }
             }
+
             #endregion
+
             //if (DateTime.Now.Minute == temp_time.Minute)
             //{
             //    PlacingOrderTemp(tick.Price, Operation.Buy, temp_time);
@@ -241,30 +251,33 @@ namespace TradingRobotsServer.Models.Logic
         #region Отправка и пересчет ордеров
 
         // Отправка первичных ордеров.
-        public override void PlacingOrders((Candle, Extremum) last_extremum, decimal price, Operation operation)
+        public override void PlacingOrders((Candle, Extremum) last_extremum, decimal price, Operation operation, DateTime dateTime)
         {
             Deal temp_deal = new DealHighLow();
             temp_deal.ID = Deals.Count;
 
-            temp_deal.SignalPoint = new TrendDataPoint(-1, last_extremum.Item1.High, last_extremum.Item1.DateTime);
+            temp_deal.TradeEntryPoint = new TrendDataPoint(Candles.Count, price, dateTime);
+            temp_deal.SignalPoint = new TrendDataPoint(last_extremum.Item1.ID, last_extremum.Item1.High, last_extremum.Item1.DateTime);
             temp_deal.Status = StatusDeal.WaitingOpen;
             temp_deal.Operation = operation;
             ((DealHighLow)temp_deal).Distance = ExtremumDistance(last_extremum);
+            temp_deal.StopLoss = FindStopLossMaxMin(temp_deal, price, Window, temp_deal.Operation);
 
-            temp_deal.Vol += 3;
+            temp_deal.Vol += -1;
 
-            if (!CheckDeal(temp_deal))
+            if (CheckDeal(temp_deal))
                 return;
-            if (!CheckDistance(temp_deal, price))
+            if (CheckDistance(temp_deal, price))
                 return;
 
             List<OrderInfo> new_order = new List<OrderInfo>();
-            new_order.Add(new OrderInfo(TypeOrder.LimitOrder, price, 3, operation, State.Active, State.Active));
+            new_order.Add(new OrderInfo(TypeOrder.LimitOrder, price, temp_deal.Vol, operation, State.Active, State.Active));
 
             temp_deal.OrdersInfo.AddRange(new_order);
 
             NewOrder?.Invoke(temp_deal, Command.SendOrder);
-            Debug.WriteLine("Strategy: Сработало событие нового ордера");
+            lock_tick = false;
+            DebugLog("Strategy: Сработало событие нового ордера");
         }
 
         private void PlacingOrderTemp(decimal price, Operation operation, DateTime time)
@@ -288,7 +301,7 @@ namespace TradingRobotsServer.Models.Logic
             temp_deal.OrdersInfo.AddRange(new_order);
 
             NewOrder?.Invoke(temp_deal, Command.SendOrder);
-            Debug.WriteLine("Strategy: Сработало событие нового ордера");
+            DebugLog("Strategy: Сработало событие нового ордера");
         }
 
         // Обработка новой сделки из Bot.
@@ -296,7 +309,6 @@ namespace TradingRobotsServer.Models.Logic
         {
             if (Deals.Count == deal.ID)
             {
-                deal.Status = StatusDeal.Open;
                 Deals.Add(deal); // новая сделка
             }
             else
@@ -378,7 +390,7 @@ namespace TradingRobotsServer.Models.Logic
                     {
                         Deals[i].TakeProfitOrdersInfo[j].ExecutionLinkedStatus = State.Completed;
 
-                        Deals[i].Vol -= 1;
+                        Deals[i].Vol -= Deals[i].TakeProfitOrdersInfo[j].Vol;
                         Deals[i].StopLimitOrdersInfo.Last().ExecutionStatus = State.Canceled;
                         Deals[i].StopLimitOrdersInfo.Add(RecalculateStopLimit(Deals[i]));
 
@@ -430,8 +442,8 @@ namespace TradingRobotsServer.Models.Logic
             List<OrderInfo> new_stop_order = new List<OrderInfo>();
 
             decimal stoploss = FindStopLossMaxMin(deal, deal.OrdersInfo[0].Price, Window, deal.Operation);
-            new_stop_order.Add(new OrderInfo(TypeOrder.StopLimit, stoploss, stoploss - 0.02m, 3, ReverseOperation(deal.Operation), State.Active, State.Active));
-            Debug.WriteLine("Strategy: Сработало событие нового стоп-лимита");
+            new_stop_order.Add(new OrderInfo(TypeOrder.StopLimit, stoploss, stoploss - 0.02m, 30, ReverseOperation(deal.Operation), State.Active, State.Active));
+            DebugLog("Strategy: Сработало событие нового стоп-лимита");
 
             return new_stop_order;
         }
@@ -441,11 +453,11 @@ namespace TradingRobotsServer.Models.Logic
         {
             List<OrderInfo> new_stop_order = new List<OrderInfo>();
             (decimal, decimal, decimal) profits = CalculationTakeProfits(deal.OrdersInfo[0].Price, deal.StopLimitOrdersInfo[0].Price, deal.Operation);
-            new_stop_order.Add(new OrderInfo(TypeOrder.TakeProfit, profits.Item1, 1, ReverseOperation(deal.Operation), State.Active, State.Active));
-            new_stop_order.Add(new OrderInfo(TypeOrder.TakeProfit, profits.Item2, 1, ReverseOperation(deal.Operation), State.Active, State.Active));
-            new_stop_order.Add(new OrderInfo(TypeOrder.TakeProfit, profits.Item3, 1, ReverseOperation(deal.Operation), State.Active, State.Active));
+            new_stop_order.Add(new OrderInfo(TypeOrder.TakeProfit, profits.Item1, -1, ReverseOperation(deal.Operation), State.Active, State.Active));
+            new_stop_order.Add(new OrderInfo(TypeOrder.TakeProfit, profits.Item2, -1, ReverseOperation(deal.Operation), State.Active, State.Active));
+            new_stop_order.Add(new OrderInfo(TypeOrder.TakeProfit, profits.Item3, -1, ReverseOperation(deal.Operation), State.Active, State.Active));
 
-            Debug.WriteLine("Strategy: Сработало событие нового стоп-ордера");
+            DebugLog("Strategy: Сработало событие нового стоп-ордера");
 
             return new_stop_order;
         }
@@ -483,19 +495,19 @@ namespace TradingRobotsServer.Models.Logic
 
         #region Методы для создания сделки(?)
 
-        private bool check_closed_deal = true;
+        private bool check_closed_deal = false;
         /// <summary>
         /// Проверка на повторяющиеся сделки.
         /// </summary>
         private bool CheckDeal(Deal deal)
         {
-            check_closed_deal = true;
+            check_closed_deal = false;
 
             for (int i = 0; i < Deals.Count; i++)
             {
                 if ((Deals[i].Status == StatusDeal.Open || Deals[i].Status == StatusDeal.Closed) && Deals[i].Operation == deal.Operation && deal.SignalPoint.XPoint == Deals[i].SignalPoint.XPoint)
                 {
-                    check_closed_deal = false;
+                    check_closed_deal = true;
                 }
             }
 
@@ -535,7 +547,7 @@ namespace TradingRobotsServer.Models.Logic
             if (point_end < 0)
                 point_end = 0;
 
-            for (int i = Candles.Last().ID - 1; i > point_end; i--)
+            for (int i = Candles.Last().ID; i >= point_end; i--)
             {
                 if (i == deal.SignalPoint.XPoint)
                     break;
@@ -600,7 +612,7 @@ namespace TradingRobotsServer.Models.Logic
             else
                 maxmin = Candles[index].High;
 
-            for (int i = index - 1; i >= index - 3; i--)
+            for (int i = index; i >= index - 3; i--)
             {
                 if (extremum.Item2 == Extremum.Max && Candles[i].Low < maxmin)
                 {
@@ -623,9 +635,9 @@ namespace TradingRobotsServer.Models.Logic
             decimal stoploss = FindStopLossMaxMin(deal, price, Window, deal.Operation);
             decimal distance = Math.Abs(stoploss - deal.SignalPoint.YPoint);
             if (((DealHighLow)deal).Distance < distance)
-                return false;
-            else
                 return true;
+            else
+                return false;
         }
 
         #endregion Методы для создания сделки(?)
@@ -637,6 +649,7 @@ namespace TradingRobotsServer.Models.Logic
         public void DebugLog(string log_string)
         {
             Debug.WriteLine(log_string);
+            logger.Info(log_string);
         }
 
         #endregion Лог

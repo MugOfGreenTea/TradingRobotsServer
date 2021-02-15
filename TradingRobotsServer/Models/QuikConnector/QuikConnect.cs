@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TradingRobotsServer.Models.Structures;
 using TradingRobotsServer.ViewModels;
+using NLog;
 
 namespace TradingRobotsServer.Models.QuikConnector
 {
@@ -18,6 +19,7 @@ namespace TradingRobotsServer.Models.QuikConnector
         public Quik quik;
         public static Quik Quik = new Quik(Quik.DefaultPort);
         private string clientCode;
+        private static Logger logger = LogManager.GetCurrentClassLogger();
 
         //private TradingRobot Robot;
 
@@ -243,6 +245,15 @@ namespace TradingRobotsServer.Models.QuikConnector
                 DebugLog("Ошибка получения заявок.");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public decimal GetFuturesDepoClearLimit(string firm_id, string acc_id, int limit_type, string curr_code)
+        {
+            FuturesLimits futuresLimits = quik.Trading.GetFuturesLimit(firm_id, acc_id, limit_type, curr_code).Result;
+            return Convert.ToDecimal(futuresLimits.CbpLimit);
         }
 
         #endregion
@@ -902,6 +913,7 @@ namespace TradingRobotsServer.Models.QuikConnector
         {
             Debug.WriteLine(log_string);
             //mainWindow.Log += log_string + "\r\n";
+            logger.Info(log_string);
         }
 
         #endregion

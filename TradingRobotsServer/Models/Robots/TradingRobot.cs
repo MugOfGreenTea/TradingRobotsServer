@@ -82,6 +82,9 @@ namespace TradingRobotsServer.Models
             Bot.SubsribeOnTrade();
             Bot.SubsribeOnOrder();
             Bot.SubscribeOnStopOrder();
+
+            int i = 5;
+            Debug.WriteLine(i++ + ++i);
         }
 
         private void StartTimer()

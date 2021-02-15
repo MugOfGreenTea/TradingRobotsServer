@@ -8,6 +8,7 @@ namespace TradingRobotsServer.Models.Structures
     {
         public int ID { get; set; }
         public TrendDataPoint TradeEntryPoint { get; set; }
+        public decimal StopLoss { get; set; }
         public TrendDataPoint ExitPoint { get; set; }
         public TrendDataPoint SignalPoint { get; set; }
         public StatusDeal Status { get; set; }
