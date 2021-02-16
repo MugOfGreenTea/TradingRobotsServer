@@ -15,6 +15,8 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
     <TargetFrameworkProfile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -112,6 +114,7 @@
     <Compile Include="Models\Support\ManagementOfRisks.cs" />
     <Compile Include="Models\Robots\TradingRobot.cs" />
     <Compile Include="ViewModels\QuikConnectingWindowViewModel.cs" />
+    <Compile Include="ViewModels\TabStrategyViewModel.cs" />
     <Compile Include="View\QuikConnectingWindow.xaml.cs">
       <DependentUpon>QuikConnectingWindow.xaml</DependentUpon>
     </Compile>

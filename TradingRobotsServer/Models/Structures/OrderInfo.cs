@@ -10,9 +10,21 @@ namespace TradingRobotsServer.Models.Structures
         public decimal Price3;//цена заявки стоп-лимита, используется только в стоплимит и тейкпрофит-стоплимит заявках
         public int Vol;
         public Operation Operation;
+        /// <summary>
+        /// Статус выставления.
+        /// </summary>
         public State IssueStatus;
+        /// <summary>
+        /// Статус исполнения.
+        /// </summary>
         public State ExecutionStatus;
+        /// <summary>
+        /// Статус выставления связанной заявки.
+        /// </summary>
         public State IssueLinkedStatus;
+        /// <summary>
+        /// Статус исполнения связаной заявки.
+        /// </summary>
         public State ExecutionLinkedStatus;
         public long IDOrder;
         public long IDLinkedOrder;//id заявки связаной со стоп-заявкой

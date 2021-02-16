@@ -49,7 +49,7 @@ namespace TradingRobotsServer.Models.Structures
         PartiallyExecuted,
         Removed
     }
-    public enum Command
+    public enum Command : byte
     {
         Null,
         SendOrder,
@@ -59,5 +59,14 @@ namespace TradingRobotsServer.Models.Structures
         TakeOffOrder,
         TakeOffStopLimitOrder,
         TakeOffTakeProfitOrder
+    }
+    public enum LogType : byte
+    {
+        Null,
+        Debug,
+        Info,
+        Warn,
+        Error,
+        Fatal
     }
 }

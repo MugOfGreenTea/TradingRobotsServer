@@ -4,18 +4,83 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TradingRobotsServer.View"
-            xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf" mc:Ignorable="d" 
+             xmlns:vm="clr-namespace:TradingRobotsServer.ViewModels"
+             xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf" mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="1450">
+    <UserControl.DataContext>
+        <vm:TabStrategyViewModel/>
+    </UserControl.DataContext>
     <Grid Background="White">
-        <Grid HorizontalAlignment="Left" Height="680" Margin="10,10,0,0" VerticalAlignment="Top" Width="297" Background="#FFEFF1FF">
-            <Label Content="Label" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
-            <TextBox HorizontalAlignment="Left" Height="23" Margin="10,36,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="154*"/>
+            <ColumnDefinition Width="416*"/>
+            <ColumnDefinition Width="155*"/>
+        </Grid.ColumnDefinitions>
+        <Grid Margin="10,10,1,10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="421*"/>
+                <RowDefinition Height="259*"/>
+            </Grid.RowDefinitions>
+            <GroupBox Header="Информация об инструменте" Margin="0,0,0,2">
+                <Grid>
+                    <Label Content="Фирма:" Margin="10,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                    <Label Content="{Binding FirmID}" HorizontalAlignment="Right" Margin="0,10,10,0" VerticalAlignment="Top" Height="26"/>
+                    <Label Content="Код клиента:" Margin="10,36,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                    <Label Content="{Binding CodeClient}" HorizontalAlignment="Right" Margin="0,35,10,0" VerticalAlignment="Top"/>
+                    <Label Content="Аккаунт ID:" Margin="10,62,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                    <Label Content="{Binding AccountID}" HorizontalAlignment="Right" Margin="0,62,10,0" VerticalAlignment="Top"/>
+                    <Label Content="Наз. инструмента:" Margin="10,102,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                    <Label Content="{Binding NameTool}" HorizontalAlignment="Right" Margin="0,101,10,0" VerticalAlignment="Top"/>
+                    <Label Content="Код инструмента:" Margin="10,128,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                    <TextBox Text="{Binding CodeTool, Mode=OneWayToSource}" HorizontalAlignment="Right" Margin="0,132,10,0" VerticalAlignment="Top" Width="152" Height="21"/>
+                    <Label Content="Таймфрейм:" Margin="10,154,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                    <TextBox  HorizontalAlignment="Right" Margin="0,158,10,0" VerticalAlignment="Top" Width="152" Height="21" Background="White"/>
+                    <!--Text="{Binding Interval, Mode=OneWayToSource}"-->
+                    <Label Content="Шаг цены:" Margin="10,180,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                    <Label Content="{Binding StepPrice}" HorizontalAlignment="Right" Margin="0,180,10,0" VerticalAlignment="Top"/>
+                    <Label Content="Лот:" Margin="10,208,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                    <Label Content="{Binding Lot}" HorizontalAlignment="Right" Margin="0,207,10,0" VerticalAlignment="Top"/>
+                    <Label Content="ГО, среднее:" Margin="10,238,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                    <Label Content="{Binding GOMiddle}" HorizontalAlignment="Right" Margin="0,238,10,0" VerticalAlignment="Top"/>
+                    <Label Content="Вар. маржа:" Margin="10,266,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                    <Label Content="{Binding VarMargin}" HorizontalAlignment="Right" Margin="0,265,10,0" VerticalAlignment="Top"/>
+                    <Label Content="Последняя цена" Margin="10,292,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                    <Label Content="{Binding LastPrice, Mode=OneWay}" HorizontalAlignment="Right" Margin="0,291,10,0" VerticalAlignment="Top"/>
+                    <Label Content="(?)" Margin="10,318,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                    <Label Content="label" HorizontalAlignment="Right" Margin="0,318,10,0" Height="26" VerticalAlignment="Top"/>
+                    <Button Content="Подключится" HorizontalAlignment="Left" Margin="187,366,0,0" VerticalAlignment="Top" Width="88"/>
+                </Grid>
+            </GroupBox>
+            <GroupBox Header="Настройки стратегии" Margin="0,3,0,0" Grid.Row="1">
+                <Grid>
+                    <Label Content="Окно свеч:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+                    <TextBox Height="23" Margin="0,14,10,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" HorizontalAlignment="Right" Width="120"/>
+                    <Label Content="Кол. свеч:" HorizontalAlignment="Left" Margin="10,36,0,0" VerticalAlignment="Top"/>
+                    <TextBox Height="23" Margin="0,40,10,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" HorizontalAlignment="Right" Width="120"/>
+                    <Label Content="Отступ:" HorizontalAlignment="Left" Margin="10,62,0,0" VerticalAlignment="Top"/>
+                    <TextBox Height="23" Margin="0,66,10,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" HorizontalAlignment="Right" Width="120"/>
+                    <Label Content="Label" HorizontalAlignment="Left" Margin="10,93,0,0" VerticalAlignment="Top"/>
+                    <TextBox HorizontalAlignment="Left" Height="23" Margin="155,97,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
+                    <Label Content="Label" HorizontalAlignment="Left" Margin="10,119,0,0" VerticalAlignment="Top"/>
+                    <TextBox HorizontalAlignment="Left" Height="23" Margin="155,123,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
+                    <CheckBox Content="Заходить в long'и" HorizontalAlignment="Left" Margin="10,150,0,0" VerticalAlignment="Top"/>
+                    <CheckBox Content="Заходить в short'ы" HorizontalAlignment="Left" Margin="10,170,0,0" VerticalAlignment="Top"/>
+                    <Button Content="Сохранить" HorizontalAlignment="Right" Margin="0,0,10,10" VerticalAlignment="Bottom" Width="75"/>
+                </Grid>
+            </GroupBox>
         </Grid>
-        <lvc:CartesianChart Series="{Binding SeriesCandle}" Name="CandleChart" DisableAnimations = "True" Zoom="Xy" DataTooltip="{x:Null}" Margin="312,10,312,79" Hoverable="False">
+        <lvc:CartesianChart Series="{Binding SeriesCandle}" Name="CandleChart" DisableAnimations = "True" Zoom="Xy" DataTooltip="{x:Null}" Margin="4,10,3,79" Hoverable="False" Grid.Column="1">
             <lvc:CartesianChart.AxisX>
                 <lvc:Axis Labels="{Binding Labels}"/>
             </lvc:CartesianChart.AxisX>
         </lvc:CartesianChart>
-        <Grid HorizontalAlignment="Left" Height="680" Margin="1143,10,0,0" VerticalAlignment="Top" Width="297" Background="#FFEFF1FF"/>
+        <Button Content="Запустить" HorizontalAlignment="Right" Margin="0,0,-99,10" VerticalAlignment="Bottom" Width="75"/>
+        <Button Content="Остановить" HorizontalAlignment="Right" Margin="0,0,653,10" VerticalAlignment="Bottom" Width="75" Grid.Column="1"/>
+        <Grid Margin="2,10,11,10" Grid.Column="2">
+            <Label Content="Лог:" HorizontalAlignment="Left" Margin="6,5,0,0" VerticalAlignment="Top"/>
+            <TextBox HorizontalAlignment="Left" Height="607" TextWrapping="Wrap" Text="{Binding Log, Mode=OneWay}" VerticalAlignment="Top" Width="297" Margin="0,31,0,0"/>
+        </Grid>
+        <Label Content="Соединение с сервером:" Grid.Column="1" HorizontalAlignment="Left" Margin="655,667,0,0" VerticalAlignment="Top"/>
+        <Rectangle Grid.Column="1" Fill="{Binding BrushesConnect, Mode=OneWay}" HorizontalAlignment="Right" Height="13" Margin="0,0,13,11" Stroke="Black" VerticalAlignment="Bottom" Width="13"/>
     </Grid>
 </UserControl>

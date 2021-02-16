@@ -4,6 +4,6 @@
              xmlns:local="clr-namespace:TradingRobotsServer"
              StartupUri="View/RobotPanel.xaml">
     <Application.Resources>
-         
+
     </Application.Resources>
 </Application>

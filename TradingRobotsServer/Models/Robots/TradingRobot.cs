@@ -84,13 +84,13 @@ namespace TradingRobotsServer.Models
             Bot.SubscribeOnStopOrder();
 
             int i = 5;
-            Debug.WriteLine(i++ + ++i);
+            Debug.WriteLine(i++ + i++);
         }
 
         private void StartTimer()
         {
             Timer = new Timer();
-            Timer.Interval = 200;
+            Timer.Interval = 10000;
             Timer.Elapsed += CallLastPrice;
             Timer.Start();
         }
