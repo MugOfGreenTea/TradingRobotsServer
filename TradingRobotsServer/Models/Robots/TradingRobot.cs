@@ -56,9 +56,10 @@ namespace TradingRobotsServer.Models
                 check_subscribe_orderbook = quik_connect.SubscribeOrderBook(ref Tool);
                 check_subscribe_tool_candles = quik_connect.SubscribeToolReceiveCandles(ref Tool, candle_interval);
                 check_subscribe_candles = quik_connect.SubscribeReceiveCandles();
-                check_subscribe_futures_client_holding = quik_connect.SubscribeOnFuturesClientHolding();
-                check_subscribe_depo_limit = quik_connect.SubscribeOnDepoLimit();
-
+                //check_subscribe_futures_client_holding = quik_connect.SubscribeOnFuturesClientHolding();
+                //check_subscribe_depo_limit = quik_connect.SubscribeOnDepoLimit();
+                //quik_connect.SubscribeOnTransReply();
+                quik_connect.SubscribeOnParam();
                 Tool.SubscribeNewCandle();//подписка Tool на новые свечи от QuikConnect
             }
         }
@@ -66,7 +67,7 @@ namespace TradingRobotsServer.Models
         private void RunStrategy(string param)
         {
             if (check_subscribe_tool_candles && check_subscribe_candles && check_subscribe_orderbook
-                    && check_subscribe_futures_client_holding && check_subscribe_depo_limit/* && check_subscribe_stoplimit*/)
+                    /*&& check_subscribe_futures_client_holding && check_subscribe_depo_limit && check_subscribe_stoplimit*/)
             {
                 Thread = new Thread(new ThreadStart(StartTimer));
                 Thread.Start();
@@ -79,9 +80,10 @@ namespace TradingRobotsServer.Models
             Strategy.SubsribeNewDeal();
             Bot.SubsribeNewDataTool();//подписка Bot на новые свечи от Tool
             Bot.SubsribeNewOrderStrategy();//подписка Bot на новые заявки от Strategy
-            Bot.SubsribeOnTrade();
+            //Bot.SubsribeOnTrade();
             Bot.SubsribeOnOrder();
             Bot.SubscribeOnStopOrder();
+            Tool.CallLastPrice();
 
             int i = 5;
             Debug.WriteLine(i++ + i++);
@@ -90,14 +92,13 @@ namespace TradingRobotsServer.Models
         private void StartTimer()
         {
             Timer = new Timer();
-            Timer.Interval = 10000;
+            Timer.Interval = 500;
             Timer.Elapsed += CallLastPrice;
             Timer.Start();
         }
 
         private void CallLastPrice(object sender, EventArgs e)
         {
-            Tool.CallLastPrice();
         }
     }
 }

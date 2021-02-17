@@ -34,6 +34,8 @@ namespace TradingRobotsServer.Models.Logic
 
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
+        private object lock_object = new object();
+
         private List<Deal> Deals { get; set; }
 
         #endregion
@@ -211,12 +213,12 @@ namespace TradingRobotsServer.Models.Logic
 
             #region
 
-            ////DateTime temp_nottradingtimemorning = new DateTime(Candles.Last().DateTime.Year, Candles.Last().DateTime.Month, Candles.Last().DateTime.Day, NotTradingTimeMorning.Hours, NotTradingTimeMorning.Minutes, NotTradingTimeMorning.Seconds);
-            ////DateTime temp_nottradingtimenight = new DateTime(Candles.Last().DateTime.Year, Candles.Last().DateTime.Month, Candles.Last().DateTime.Day, NotTradingTimeNight.Hours, NotTradingTimeNight.Minutes, NotTradingTimeNight.Seconds);
-            ////if (Candles.Last().DateTime <= temp_nottradingtimemorning)
-            ////    return;
-            ////if (Candles.Last().DateTime >= temp_nottradingtimenight)
-            ////    return;
+            //DateTime temp_nottradingtimemorning = new DateTime(Candles.Last().DateTime.Year, Candles.Last().DateTime.Month, Candles.Last().DateTime.Day, NotTradingTimeMorning.Hours, NotTradingTimeMorning.Minutes, NotTradingTimeMorning.Seconds);
+            //DateTime temp_nottradingtimenight = new DateTime(Candles.Last().DateTime.Year, Candles.Last().DateTime.Month, Candles.Last().DateTime.Day, NotTradingTimeNight.Hours, NotTradingTimeNight.Minutes, NotTradingTimeNight.Seconds);
+            //if (Candles.Last().DateTime <= temp_nottradingtimemorning)
+            //    return;
+            //if (Candles.Last().DateTime >= temp_nottradingtimenight)
+            //    return;
             //if (Extremums.Count == 0)
             //    return;
 
@@ -243,9 +245,13 @@ namespace TradingRobotsServer.Models.Logic
 
             #endregion
 
-            //if (DateTime.Now.Minute == temp_time.Minute)
+            if (DateTime.Now.Minute % 5 == 0 && !lock_tick_long)
             {
-                PlacingOrderTemp(tick.Price, Operation.Buy, temp_time);
+                lock (lock_object)
+                {
+                    lock_tick_long = true;
+                    PlacingOrderTemp(tick.Price, Operation.Buy, DateTime.Now);
+                }
             }
         }
 
@@ -262,14 +268,15 @@ namespace TradingRobotsServer.Models.Logic
             temp_deal.Status = StatusDeal.WaitingOpen;
             temp_deal.Operation = operation;
             ((DealHighLow)temp_deal).Distance = ExtremumDistance(last_extremum);
-            temp_deal.StopLoss = FindStopLossMaxMin(temp_deal, price, Window, temp_deal.Operation);
-
-            temp_deal.Vol += -1;
 
             if (CheckDeal(temp_deal))
                 return;
             if (CheckDistance(temp_deal, price))
                 return;
+
+            temp_deal.StopLoss = FindStopLossMaxMin(temp_deal, price, Window, temp_deal.Operation);
+            temp_deal.Vol += -1;
+
 
             List<OrderInfo> new_order = new List<OrderInfo>();
             new_order.Add(new OrderInfo(TypeOrder.LimitOrder, price, temp_deal.Vol, operation, State.Active, State.Active));
@@ -290,7 +297,7 @@ namespace TradingRobotsServer.Models.Logic
             temp_deal.ID = Deals.Count;
 
             temp_deal.TradeEntryPoint = new TrendDataPoint(Candles.Count, price, time);
-            temp_deal.SignalPoint = new TrendDataPoint(-1, 270, time);
+            temp_deal.SignalPoint = new TrendDataPoint(-1, time.Minute, time);
             temp_deal.Status = StatusDeal.WaitingOpen;
             temp_deal.Operation = operation;
             if (CheckDeal(temp_deal))
@@ -306,7 +313,9 @@ namespace TradingRobotsServer.Models.Logic
 
             temp_deal.OrdersInfo.AddRange(new_order);
 
-            NewOrder?.Invoke(temp_deal, Command.SendOrder);
+            Deals.Add(temp_deal);
+
+            NewOrder?.Invoke(Deals.Last(), Command.SendOrder);
             if (operation == Operation.Buy)
                 lock_tick_long = false;
             if (operation == Operation.Sell)
@@ -324,6 +333,7 @@ namespace TradingRobotsServer.Models.Logic
             else
             {
                 int index = deal.ID;
+                Deals[index].Status = deal.Status;
 
                 switch (command)
                 {
@@ -357,7 +367,7 @@ namespace TradingRobotsServer.Models.Logic
         }
 
         // Фиксирование исполнения ордера.
-        public override void ProcessingExecutedOrders(Order order)
+        public override bool ProcessingExecutedOrders(Order order)
         {
             for (int i = 0; i < Deals.Count; i++)
             {
@@ -373,7 +383,7 @@ namespace TradingRobotsServer.Models.Logic
                         NewOrder?.Invoke(Deals[i], Command.SendStopLimitOrder);
                         NewOrder?.Invoke(Deals[i], Command.SendTakeProfitOrder);
 
-                        return;
+                        return true;
                     }
                 }
 
@@ -392,7 +402,7 @@ namespace TradingRobotsServer.Models.Logic
 
                         NewOrder(Deals[i], Command.TakeOffTakeProfitOrder);
 
-                        return;
+                        return true;
                     }
                 }
 
@@ -403,7 +413,13 @@ namespace TradingRobotsServer.Models.Logic
                         Deals[i].TakeProfitOrdersInfo[j].ExecutionLinkedStatus = State.Completed;
 
                         Deals[i].Vol -= Deals[i].TakeProfitOrdersInfo[j].Vol;
-                        Deals[i].StopLimitOrdersInfo.Last().ExecutionStatus = State.Canceled;
+
+                        for (int k = 0; k < Deals[i].StopLimitOrdersInfo.Count; k++)
+                        {
+                            if (Deals[i].StopLimitOrdersInfo[k].ExecutionStatus == State.Active)
+                                Deals[i].StopLimitOrdersInfo[k].ExecutionStatus = State.Canceled;
+                        }
+
                         Deals[i].StopLimitOrdersInfo.Add(RecalculateStopLimit(Deals[i]));
                         Deals[i].TakeProfitOrdersInfo.Add(RecalculateTakeProfit(Deals[i]));
 
@@ -414,14 +430,15 @@ namespace TradingRobotsServer.Models.Logic
                         if (Deals[i].Vol == 0)
                             Deals[i].Status = StatusDeal.Closed;
 
-                        return;
+                        return true;
                     }
                 }
             }
+            return false;
         }
 
         // Фиксирование исполнения стоп-ордера.
-        public override void ProcessingExecutedStopOrders(StopOrder stoporder)
+        public override bool ProcessingExecutedStopOrders(StopOrder stoporder)
         {
             for (int i = 0; i < Deals.Count; i++)
             {
@@ -434,7 +451,7 @@ namespace TradingRobotsServer.Models.Logic
                         Deals[i].TakeProfitOrdersInfo[j].ExecutionLinkedStatus = State.Active;
                         Deals[i].StopLimitOrdersInfo[j].IDLinkedOrder = stoporder.LinkedOrder;
 
-                        return;
+                        return true;
                     }
                 }
 
@@ -446,10 +463,11 @@ namespace TradingRobotsServer.Models.Logic
                         Deals[i].TakeProfitOrdersInfo[j].ExecutionLinkedStatus = State.Active;
                         Deals[i].TakeProfitOrdersInfo[j].IDLinkedOrder = stoporder.LinkedOrder;
 
-                        return;
+                        return true;
                     }
                 }
             }
+            return false;
         }
 
         // Рассчет первичных стоп-лимитов.
@@ -529,7 +547,8 @@ namespace TradingRobotsServer.Models.Logic
 
             for (int i = 0; i < Deals.Count; i++)
             {
-                if ((Deals[i].Status == StatusDeal.Open || Deals[i].Status == StatusDeal.Closed) && Deals[i].Operation == deal.Operation && deal.SignalPoint.XPoint == Deals[i].SignalPoint.XPoint)
+                if ((Deals[i].Status == StatusDeal.Open || Deals[i].Status == StatusDeal.Closed) && Deals[i].Operation == deal.Operation
+                    && deal.SignalPoint.DateTime.Hour == Deals[i].SignalPoint.DateTime.Hour && deal.SignalPoint.DateTime.Minute == Deals[i].SignalPoint.DateTime.Minute)
                 {
                     check_closed_deal = true;
                 }

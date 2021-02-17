@@ -107,6 +107,7 @@
     <Compile Include="Models\Structures\DataPoint.cs" />
     <Compile Include="Models\Logic\Deal.cs" />
     <Compile Include="Models\Structures\Enums.cs" />
+    <Compile Include="Models\Structures\Logs.cs" />
     <Compile Include="Models\Structures\OrderInfo.cs" />
     <Compile Include="Models\Structures\StockData.cs" />
     <Compile Include="Models\Structures\Tick.cs" />

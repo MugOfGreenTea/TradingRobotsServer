@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using TradingRobotsServer.Models.Structures;
 using TradingRobotsServer.ViewModels;
 using NLog;
+using System.Globalization;
 
 namespace TradingRobotsServer.Models.QuikConnector
 {
@@ -19,9 +20,9 @@ namespace TradingRobotsServer.Models.QuikConnector
         public Quik quik;
         public static Quik Quik = new Quik(Quik.DefaultPort);
         private string clientCode;
-        private static Logger logger = LogManager.GetCurrentClassLogger();
 
         //private TradingRobot Robot;
+        private Char separator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator[0];
 
         public QuikConnect()
         {
@@ -40,23 +41,23 @@ namespace TradingRobotsServer.Models.QuikConnector
         {
             try
             {
-                DebugLog("Подключаемся к терминалу Quik...", LogType.Info);
+                Logs.DebugLog("Подключаемся к терминалу Quik...", LogType.Info);
                 quik = new Quik(port, new InMemoryStorage(), host);
 
                 if (quik != null)
                 {
-                    DebugLog("Экземпляр Quik создан.", LogType.Info);
+                    Logs.DebugLog("Экземпляр Quik создан.", LogType.Info);
                     try
                     {
-                        DebugLog("Получаем статус соединения с сервером....", LogType.Info);
+                        Logs.DebugLog("Получаем статус соединения с сервером....", LogType.Info);
                         if (CallQuikConnecting(ref quik))
                         {
-                            DebugLog("Соединение с сервером установлено.", LogType.Info);
+                            Logs.DebugLog("Соединение с сервером установлено.", LogType.Info);
                             return true;
                         }
                         else
                         {
-                            DebugLog("Соединение с сервером НЕ установлено.", LogType.Error);
+                            Logs.DebugLog("Соединение с сервером НЕ установлено.", LogType.Error);
                             return false;
                         }
                         // для отладки
@@ -66,14 +67,14 @@ namespace TradingRobotsServer.Models.QuikConnector
                     }
                     catch
                     {
-                        DebugLog("Неудачная попытка получить статус соединения с сервером.", LogType.Error);
+                        Logs.DebugLog("Неудачная попытка получить статус соединения с сервером.", LogType.Error);
                         return false;
                     }
                 }
             }
             catch
             {
-                DebugLog("Ошибка инициализации объекта Quik...", LogType.Error);
+                Logs.DebugLog("Ошибка инициализации объекта Quik...", LogType.Error);
                 return false;
             }
             return false;
@@ -89,27 +90,27 @@ namespace TradingRobotsServer.Models.QuikConnector
         //    string classCode;
         //    try
         //    {
-        //        DebugLog("Определяем код класса инструмента " + name_tool + ", по списку классов" + "...", LogType.Info);
+        //        Logs.DebugLog("Определяем код класса инструмента " + name_tool + ", по списку классов" + "...", LogType.Info);
         //        try
         //        {
         //            classCode = quik.Class.GetSecurityClass("SPBFUT,TQBR,TQBS,TQNL,TQLV,TQNE,TQOB,QJSIM", name_tool).Result;
         //        }
         //        catch
         //        {
-        //            DebugLog("Ошибка определения класса инструмента. Убедитесь, что тикер указан правильно", LogType.Info);
+        //            Logs.DebugLog("Ошибка определения класса инструмента. Убедитесь, что тикер указан правильно", LogType.Info);
         //            return false;
         //        }
         //        if (classCode != null && classCode != "")
         //        {
-        //            DebugLog("Определяем код клиента...", LogType.Info);
+        //            Logs.DebugLog("Определяем код клиента...", LogType.Info);
         //            clientCode = quik.Class.GetClientCode().Result;
 
-        //            DebugLog("Создаем экземпляр инструмента " + name_tool + "|" + classCode + "...", LogType.Info);
+        //            Logs.DebugLog("Создаем экземпляр инструмента " + name_tool + "|" + classCode + "...", LogType.Info);
         //            Tools.Add(new Tool(ref quik, Tools.Count, name_tool, classCode, interval));
 
         //            if (Tools.Last() != null && Tools.Last().Name != null && Tools.Last().Name != "" && Tools.Last().SecurityCode == name_tool && Tools.Last().ClassCode == classCode)
         //            {
-        //                DebugLog("Инструмент " + Tools.Last().Name + " создан.", LogType.Info);
+        //                Logs.DebugLog("Инструмент " + Tools.Last().Name + " создан.", LogType.Info);
 
         //                return true;
         //            }
@@ -118,7 +119,7 @@ namespace TradingRobotsServer.Models.QuikConnector
         //    }
         //    catch
         //    {
-        //        DebugLog("Ошибка получения данных по инструменту.", LogType.Info);
+        //        Logs.DebugLog("Ошибка получения данных по инструменту.", LogType.Info);
         //        return false;
         //    }
         //    return false;
@@ -128,28 +129,28 @@ namespace TradingRobotsServer.Models.QuikConnector
             string classCode;
             try
             {
-                DebugLog("Определяем код класса инструмента " + name_tool + ", по списку классов" + "...", LogType.Info);
+                Logs.DebugLog("Определяем код класса инструмента " + name_tool + ", по списку классов" + "...", LogType.Info);
                 try
                 {
                     classCode = quik.Class.GetSecurityClass("SPBFUT,TQBR,TQBS,TQNL,TQLV,TQNE,TQOB,QJSIM", name_tool).Result;
                 }
                 catch
                 {
-                    DebugLog("Ошибка определения класса инструмента. Убедитесь, что тикер указан правильно", LogType.Error);
+                    Logs.DebugLog("Ошибка определения класса инструмента. Убедитесь, что тикер указан правильно", LogType.Error);
                     return null;
                 }
                 if (classCode != null && classCode != "")
                 {
-                    DebugLog("Определяем код клиента...", LogType.Info);
+                    Logs.DebugLog("Определяем код клиента...", LogType.Info);
                     clientCode = quik.Class.GetClientCode().Result;
 
-                    DebugLog("Создаем экземпляр инструмента " + name_tool + "|" + classCode + "...", LogType.Info);
+                    Logs.DebugLog("Создаем экземпляр инструмента " + name_tool + "|" + classCode + "...", LogType.Info);
 
                     Tool tool = new Tool(ref quik, 0, name_tool, classCode, interval);///////////
 
                     if (tool != null && tool.Name != null && tool.Name != "" && tool.SecurityCode == name_tool && tool.ClassCode == classCode)
                     {
-                        DebugLog("Инструмент " + tool.Name + " создан.", LogType.Info);
+                        Logs.DebugLog("Инструмент " + tool.Name + " создан.", LogType.Info);
 
                         return tool;
                     }
@@ -158,7 +159,7 @@ namespace TradingRobotsServer.Models.QuikConnector
             }
             catch
             {
-                DebugLog("Ошибка получения данных по инструменту.", LogType.Error);
+                Logs.DebugLog("Ошибка получения данных по инструменту.", LogType.Error);
                 return null;
             }
             return null;
@@ -195,14 +196,14 @@ namespace TradingRobotsServer.Models.QuikConnector
         {
             try
             {
-                DebugLog("Получаем таблицу сделок...", LogType.Info);
+                Logs.DebugLog("Получаем таблицу сделок...", LogType.Info);
                 List<Trade> trades = quik.Trading.GetTrades().Result;
-                DebugLog("Таблица сделок получена.", LogType.Info);
+                Logs.DebugLog("Таблица сделок получена.", LogType.Info);
                 return trades;
             }
             catch
             {
-                DebugLog("Ошибка получения сделок.", LogType.Error);
+                Logs.DebugLog("Ошибка получения сделок.", LogType.Error);
                 return null;
             }
         }
@@ -215,14 +216,14 @@ namespace TradingRobotsServer.Models.QuikConnector
         {
             try
             {
-                DebugLog("Получаем таблицу заявок...", LogType.Info);
+                Logs.DebugLog("Получаем таблицу заявок...", LogType.Info);
                 List<Order> orders = quik.Orders.GetOrders().Result;
-                DebugLog("Таблица заявок получена.", LogType.Info);
+                Logs.DebugLog("Таблица заявок получена.", LogType.Info);
                 return orders;
             }
             catch
             {
-                DebugLog("Ошибка получения заявок.", LogType.Error);
+                Logs.DebugLog("Ошибка получения заявок.", LogType.Error);
                 return null;
             }
         }
@@ -235,14 +236,14 @@ namespace TradingRobotsServer.Models.QuikConnector
         {
             try
             {
-                DebugLog("Получаем таблицу заявок...", LogType.Info);
+                Logs.DebugLog("Получаем таблицу заявок...", LogType.Info);
                 List<StopOrder> stoporders = quik.StopOrders.GetStopOrders().Result;
-                DebugLog("Таблица заявок получена.", LogType.Info);
+                Logs.DebugLog("Таблица заявок получена.", LogType.Info);
                 return stoporders;
             }
             catch
             {
-                DebugLog("Ошибка получения заявок.", LogType.Error);
+                Logs.DebugLog("Ошибка получения заявок.", LogType.Error);
                 return null;
             }
         }
@@ -267,28 +268,28 @@ namespace TradingRobotsServer.Models.QuikConnector
         {
             try
             {
-                DebugLog("Подписываемся на стакан...", LogType.Info);
+                Logs.DebugLog("Подписываемся на стакан...", LogType.Info);
                 quik.OrderBook.Subscribe(Tool.ClassCode, Tool.SecurityCode).Wait();
                 Tool.isSubscribedToolOrderBook = quik.OrderBook.IsSubscribed(Tool.ClassCode, Tool.SecurityCode).Result;
 
                 if (Tool.isSubscribedToolOrderBook)
                 {
-                    DebugLog("Подписка на стакан прошла успешно.", LogType.Info);
+                    Logs.DebugLog("Подписка на стакан прошла успешно.", LogType.Info);
 
-                    DebugLog("Подписываемся на изменение стакана (OnQuote)...", LogType.Info);
+                    Logs.DebugLog("Подписываемся на изменение стакана (OnQuote)...", LogType.Info);
                     quik.Events.OnQuote += OnQuoteDo;
-                    DebugLog("Подписка включена...", LogType.Info);
+                    Logs.DebugLog("Подписка включена...", LogType.Info);
                     return true;
                 }
                 else
                 {
-                    DebugLog("Подписка на стакан не удалась.", LogType.Error);
+                    Logs.DebugLog("Подписка на стакан не удалась.", LogType.Error);
                     return false;
                 }
             }
             catch
             {
-                DebugLog("Подписка на стакан не удалась.", LogType.Error);
+                Logs.DebugLog("Подписка на стакан не удалась.", LogType.Error);
                 return false;
             }
         }
@@ -300,14 +301,14 @@ namespace TradingRobotsServer.Models.QuikConnector
         {
             try
             {
-                DebugLog("Подписываемся на изменение позиции на срочном рынке (OnFuturesClientHolding)...", LogType.Info);
+                Logs.DebugLog("Подписываемся на изменение позиции на срочном рынке (OnFuturesClientHolding)...", LogType.Info);
                 quik.Events.OnFuturesClientHolding += OnFuturesClientHoldingDo;
-                DebugLog("Подписка включена...", LogType.Info);
+                Logs.DebugLog("Подписка включена...", LogType.Info);
                 return true;
             }
             catch
             {
-                DebugLog("Подписка на изменение позиции на срочном рынке (OnFuturesClientHolding) не удалась.", LogType.Error);
+                Logs.DebugLog("Подписка на изменение позиции на срочном рынке (OnFuturesClientHolding) не удалась.", LogType.Error);
                 return false;
             }
         }
@@ -319,14 +320,14 @@ namespace TradingRobotsServer.Models.QuikConnector
         {
             try
             {
-                DebugLog("Подписываемся на получения изменений лимита по бумагам (OnDepoLimit)...", LogType.Info);
+                Logs.DebugLog("Подписываемся на получения изменений лимита по бумагам (OnDepoLimit)...", LogType.Info);
                 quik.Events.OnDepoLimit += OnDepoLimitDo;
-                DebugLog("Подписка включена...", LogType.Info);
+                Logs.DebugLog("Подписка включена...", LogType.Info);
                 return true;
             }
             catch
             {
-                DebugLog("Подписка на получения изменений лимита по бумагам (OnDepoLimit) не удалась.", LogType.Error);
+                Logs.DebugLog("Подписка на получения изменений лимита по бумагам (OnDepoLimit) не удалась.", LogType.Error);
                 return false;
             }
         }
@@ -342,18 +343,18 @@ namespace TradingRobotsServer.Models.QuikConnector
             {
                 while (!Tool.isSubscribedToolCandles)
                 {
-                    DebugLog($"Подписываем инструмент {Tool.SecurityCode} на получение свеч: " + Tool.ClassCode + " | " + Tool.SecurityCode + " | " + timeframe + "...", LogType.Info);
+                    Logs.DebugLog($"Подписываем инструмент {Tool.SecurityCode} на получение свеч: " + Tool.ClassCode + " | " + Tool.SecurityCode + " | " + timeframe + "...", LogType.Info);
                     quik.Candles.Subscribe(Tool.ClassCode, Tool.SecurityCode, timeframe).Wait();
 
-                    DebugLog("Проверяем состояние подписки...", LogType.Info);
+                    Logs.DebugLog("Проверяем состояние подписки...", LogType.Info);
                     Tool.isSubscribedToolCandles = quik.Candles.IsSubscribed(Tool.ClassCode, Tool.SecurityCode, timeframe).Result;
                 }
-                DebugLog("Подписка включена...", LogType.Info);
+                Logs.DebugLog("Подписка включена...", LogType.Info);
                 return true;
             }
             catch
             {
-                DebugLog("Подписка инструмента на получение свеч не удалась.", LogType.Error);
+                Logs.DebugLog("Подписка инструмента на получение свеч не удалась.", LogType.Error);
                 return false;
             }
         }
@@ -366,14 +367,14 @@ namespace TradingRobotsServer.Models.QuikConnector
         {
             try
             {
-                DebugLog("Подписываемся на получения свеч (OnNewCandle)...", LogType.Info);
+                Logs.DebugLog("Подписываемся на получения свеч (OnNewCandle)...", LogType.Info);
                 quik.Candles.NewCandle += OnNewCandle;
-                DebugLog("Подписка включена...", LogType.Info);
+                Logs.DebugLog("Подписка включена...", LogType.Info);
                 return true;
             }
             catch
             {
-                DebugLog("Подписка на получения свеч (OnNewCandle) не удалась.", LogType.Error);
+                Logs.DebugLog("Подписка на получения свеч (OnNewCandle) не удалась.", LogType.Error);
                 return false;
             }
         }
@@ -386,14 +387,14 @@ namespace TradingRobotsServer.Models.QuikConnector
         {
             try
             {
-                DebugLog("Подписываемся на изменение позиции в стоп-заявках...", LogType.Info);
+                Logs.DebugLog("Подписываемся на изменение позиции в стоп-заявках...", LogType.Info);
                 quik.Events.OnStopOrder += OnStopOrderDo;
-                DebugLog("Подписка включена...", LogType.Info);
+                Logs.DebugLog("Подписка включена...", LogType.Info);
                 return true;
             }
             catch
             {
-                DebugLog("Подписка на изменение позиции в стоп-заявках не удалась.", LogType.Error);
+                Logs.DebugLog("Подписка на изменение позиции в стоп-заявках не удалась.", LogType.Error);
                 return false;
             }
         }
@@ -406,14 +407,46 @@ namespace TradingRobotsServer.Models.QuikConnector
         {
             try
             {
-                DebugLog("Подписываемся на получение информации о новой сделке...", LogType.Info);
+                Logs.DebugLog("Подписываемся на получение информации о новой сделке...", LogType.Info);
                 quik.Events.OnTrade += OnTrade;
-                DebugLog("Подписка включена...", LogType.Info);
+                Logs.DebugLog("Подписка включена...", LogType.Info);
                 return true;
             }
             catch
             {
-                DebugLog("Подписка на получение информации о новой сделке не удалась.", LogType.Error);
+                Logs.DebugLog("Подписка на получение информации о новой сделке не удалась.", LogType.Error);
+                return false;
+            }
+        }
+
+        public bool SubscribeOnTransReply()
+        {
+            try
+            {
+                Logs.DebugLog("Подписываемся на получение информации о новой сделке...", LogType.Info);
+                quik.Events.OnTransReply += OnTransReply;
+                Logs.DebugLog("Подписка включена...", LogType.Info);
+                return true;
+            }
+            catch
+            {
+                Logs.DebugLog("Подписка на получение информации о новой сделке не удалась.", LogType.Error);
+                return false;
+            }
+        }
+
+        public bool SubscribeOnParam()
+        {
+            try
+            {
+                Logs.DebugLog("Подписываемся на получение информации о новой сделке...", LogType.Info);
+                quik.Events.OnParam += OnParam;
+                Logs.DebugLog("Подписка включена...", LogType.Info);
+                return true;
+            }
+            catch
+            {
+                Logs.DebugLog("Подписка на получение информации о новой сделке не удалась.", LogType.Error);
                 return false;
             }
         }
@@ -428,7 +461,7 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// <param name="dLimit"></param>
         private void OnDepoLimitDo(DepoLimitEx depo_limit)
         {
-            DebugLog("Произошло изменение лимита по бумагам", LogType.Info);
+            Logs.DebugLog("Произошло изменение лимита по бумагам", LogType.Info);
         }
 
         /// <summary>
@@ -437,7 +470,7 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// <param name="futPos"></param>
         private void OnFuturesClientHoldingDo(FuturesClientHolding futures_position)
         {
-            DebugLog("Произошло изменение позиции на срочном рынке", LogType.Info);
+            Logs.DebugLog("Произошло изменение позиции на срочном рынке", LogType.Info);
         }
 
         /// <summary>
@@ -446,26 +479,13 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// <param name="orderbook"></param>
         private void OnQuoteDo(OrderBook orderbook)
         {
-            //DebugLog("Произошло изменение стакана", LogType.Info);
+            //Logs.DebugLog("Произошло изменение стакана", LogType.Info);
         }
 
         /// <summary>
         /// Обработчик события получения новой свечи.
         /// </summary>
         /// <param name="candle"></param>
-        //private void OnNewCandle(Candle candle)
-        //{
-        //    for (int i = 0; i < mainWindow.Tools.Count; i++)
-        //    {
-        //        if (mainWindow.Tool.Candles != null && candle.SecCode == mainWindow.Tool.SecurityCode && candle.ClassCode == mainWindow.Tool.ClassCode && candle.Interval == mainWindow.Tool.Interval)
-        //        {
-        //            mainWindow.Tool.AddNewCandle(new Structures.Candle(candle));
-
-        //            //QuikDateTime temp = mainWindow.Tool.Candles.Last().Datetime;
-        //            //DebugLog("Получена новая свеча от: " + temp.day + "." + temp.month + "." + temp.year + " " + temp.hour + "-" + temp.min + "-" + temp.sec + ", значения: " + mainWindow.Tool.Candles.Last().ToString());
-        //        }
-        //    }
-        //}
         private void OnNewCandle(Candle candle)
         {
             //if (Robot.Tool.Candles != null && candle.SecCode == Robot.Tool.SecurityCode && candle.ClassCode == Robot.Tool.ClassCode && candle.Interval == Robot.Tool.Interval)
@@ -473,9 +493,10 @@ namespace TradingRobotsServer.Models.QuikConnector
             //    Robot.Tool.AddNewCandle(new Structures.Candle(candle));
 
             //QuikDateTime temp = candle.Datetime;
-            //DebugLog("Получена новая свеча из квика от: " + temp.day + "." + temp.month + "." + temp.year + " " + temp.hour + "-" + temp.min + "-" + temp.sec + ", значения: " + candle.ToString());
+            //Logs.DebugLog("Получена новая свеча из квика от: " + temp.day + "." + temp.month + "." + temp.year + " " + temp.hour + "-" + temp.min + "-" + temp.sec + ", значения: " + candle.ToString());
             //}
         }
+
         /// <summary>
         /// Обработчик события изменение позиции в стоп-заявках. 
         /// </summary>
@@ -487,21 +508,32 @@ namespace TradingRobotsServer.Models.QuikConnector
                 if (stoporder != null && stoporder.OrderNum > 0)
                 {
                     //Trace.WriteLine("Trace: Вызвано событие OnStopOrder - 'Time' = " + DateTime.Now + ", 'OrderNum' = " + stoporder.OrderNum + ", 'State' = " + stoporder.State);
-                    DebugLog("Вызвано событие OnStopOrder - 'Time' = " + DateTime.Now + ", 'OrderNum' = " + stoporder.OrderNum + ", 'State' = " + stoporder.State, LogType.Info);
-                    DebugLog("Вызвано событие OnStopOrder - связ. заявка: " + stoporder.LinkedOrder, LogType.Info);
+                    Logs.DebugLog("Вызвано событие OnStopOrder - 'Time' = " + DateTime.Now + ", 'OrderNum' = " + stoporder.OrderNum + ", 'State' = " + stoporder.State, LogType.Info);
+                    Logs.DebugLog("Вызвано событие OnStopOrder - связ. заявка: " + stoporder.LinkedOrder, LogType.Info);
                 }
             }
             catch (Exception er)
             {
                 //Trace.WriteLine("Trace: Ошибка в OnStopOrderDo() - " + er.ToString());
-                DebugLog("Trace: Ошибка в OnStopOrderDo() - " + er.ToString(), LogType.Error);
+                Logs.DebugLog("Trace: Ошибка в OnStopOrderDo() - " + er.ToString(), LogType.Error);
             }
         }
 
-
         private void OnTrade(Trade trade)
         {
-            DebugLog("Произошло OnTrade.", LogType.Info);
+            Logs.DebugLog("Произошло OnTrade.", LogType.Info);
+        }
+
+        private void OnTransReply(TransactionReply reply)
+        {
+
+        }
+
+        private void OnParam(Param param)
+        {
+            Debug.WriteLine(param.SecCode);
+            Debug.WriteLine(quik.Trading.GetParamEx(param.ClassCode, param.SecCode, ParamNames.PRICEMAX).Result.ParamValue.Replace('.', separator));
+            Debug.WriteLine(quik.Trading.GetParamEx(param.ClassCode, param.SecCode, ParamNames.PRICEMIN).Result.ParamValue.Replace('.', separator));
         }
 
         #endregion
@@ -522,12 +554,11 @@ namespace TradingRobotsServer.Models.QuikConnector
             try
             {
                 price = Math.Round(price, Tool.PriceAccuracy);
-                DebugLog("Выставляем заявку на покупку, по цене:" + price + " ...", LogType.Info);
+                Logs.DebugLog("Выставляем заявку на покупку, по цене:" + price + " ...", LogType.Info);
                 long transactionID = (await quik.Orders.SendLimitOrder(Tool.ClassCode, Tool.SecurityCode, Tool.AccountID, operation, price, vol).ConfigureAwait(false)).TransID;
                 if (transactionID > 0)
                 {
-                    DebugLog("Заявка выставлена. ID транзакции - " + transactionID,LogType.Info);
-                    Thread.Sleep(500);
+                    Logs.DebugLog("Заявка выставлена. ID транзакции - " + transactionID, LogType.Info);
                     try
                     {
                         List<Order> Orders = GetOrdersTable();
@@ -535,29 +566,27 @@ namespace TradingRobotsServer.Models.QuikConnector
                         {
                             if (order.TransID == transactionID && order.ClassCode == Tool.ClassCode && order.SecCode == Tool.SecurityCode)
                             {
-                                DebugLog("Заявка выставлена. Номер заявки - " + order.OrderNum, LogType.Info);
+                                Logs.DebugLog("Заявка выставлена. Номер заявки - " + order.OrderNum, LogType.Info);
                                 return order;
-                                //Text2TextBox(textBoxOrderNumber, _order.OrderNum.ToString());
                             }
-
                         }
                         return null;
                     }
                     catch
                     {
-                        DebugLog("Ошибка получения таблицы заявок.", LogType.Error);
+                        Logs.DebugLog("Ошибка получения таблицы заявок.", LogType.Error);
                         return null;
                     }
                 }
                 else
                 {
-                    DebugLog("Неудачная попытка выставления заявки.", LogType.Error);
+                    Logs.DebugLog("Неудачная попытка выставления заявки.", LogType.Error);
                     return null;
                 }
             }
             catch
             {
-                DebugLog("Ошибка выставления заявки.", LogType.Error);
+                Logs.DebugLog("Ошибка выставления заявки.", LogType.Error);
                 return null;
             }
         }
@@ -575,11 +604,11 @@ namespace TradingRobotsServer.Models.QuikConnector
             try
             {
                 //decimal priceInOrder = Math.Round(Tool.LastPrice + Tool.Step * 5, Tool.PriceAccuracy);
-                DebugLog("Выставляем рыночную заявку на покупку...", LogType.Info);
+                Logs.DebugLog("Выставляем рыночную заявку на покупку...", LogType.Info);
                 long transactionID = (await quik.Orders.SendMarketOrder(Tool.ClassCode, Tool.SecurityCode, Tool.AccountID, operation, vol).ConfigureAwait(false)).TransID;
                 if (transactionID > 0)
                 {
-                    DebugLog("Заявка выставлена. ID транзакции - " + transactionID, LogType.Info);
+                    Logs.DebugLog("Заявка выставлена. ID транзакции - " + transactionID, LogType.Info);
                     Thread.Sleep(500);
                     try
                     {
@@ -588,7 +617,7 @@ namespace TradingRobotsServer.Models.QuikConnector
                         {
                             if (order.TransID == transactionID && order.ClassCode == Tool.ClassCode && order.SecCode == Tool.SecurityCode)
                             {
-                                DebugLog("Заявка выставлена. Номер заявки - " + order.OrderNum, LogType.Info);
+                                Logs.DebugLog("Заявка выставлена. Номер заявки - " + order.OrderNum, LogType.Info);
                                 //Text2TextBox(textBoxOrderNumber, order.OrderNum.ToString());
                                 return order;
                             }
@@ -597,19 +626,19 @@ namespace TradingRobotsServer.Models.QuikConnector
                     }
                     catch
                     {
-                        DebugLog("Ошибка получения таблицы заявок.", LogType.Error);
+                        Logs.DebugLog("Ошибка получения таблицы заявок.", LogType.Error);
                         return null;
                     }
                 }
                 else
                 {
-                    DebugLog("Неудачная попытка выставления заявки.", LogType.Error);
+                    Logs.DebugLog("Неудачная попытка выставления заявки.", LogType.Error);
                     return null;
                 }
             }
             catch
             {
-                DebugLog("Ошибка выставления заявки.", LogType.Error);
+                Logs.DebugLog("Ошибка выставления заявки.", LogType.Error);
                 return null;
             }
         }
@@ -632,67 +661,30 @@ namespace TradingRobotsServer.Models.QuikConnector
             decimal takeprofit, decimal stoplimit, decimal price, Operation operation, int vol,
             OffsetUnits offset_units = OffsetUnits.PRICE_UNITS, OffsetUnits spread_unit = OffsetUnits.PRICE_UNITS)
         {
-            try
+            StopOrder order = new StopOrder()
             {
-                StopOrder order = new StopOrder()
-                {
-                    Account = Tool.AccountID,
-                    ClassCode = Tool.ClassCode,
-                    ClientCode = clientCode,
-                    SecCode = Tool.SecurityCode,
-                    Offset = offset,
-                    OffsetUnit = offset_units,
-                    Spread = spread,
-                    SpreadUnit = spread_unit,
-                    StopOrderType = StopOrderType.TakeProfitStopLimit,
-                    ConditionPrice = Math.Round(takeprofit, Tool.PriceAccuracy),
-                    ConditionPrice2 = Math.Round(stoplimit, Tool.PriceAccuracy),
-                    Price = Math.Round(price, Tool.PriceAccuracy),
-                    Operation = operation,
-                    Quantity = vol
-                };
+                Account = Tool.AccountID,
+                ClassCode = Tool.ClassCode,
+                ClientCode = clientCode,
+                SecCode = Tool.SecurityCode,
+                Offset = offset,
+                OffsetUnit = offset_units,
+                Spread = spread,
+                SpreadUnit = spread_unit,
+                StopOrderType = StopOrderType.TakeProfitStopLimit,
+                ConditionPrice = Math.Round(takeprofit, Tool.PriceAccuracy),
+                ConditionPrice2 = Math.Round(stoplimit, Tool.PriceAccuracy),
+                Price = Math.Round(price, Tool.PriceAccuracy),
+                Operation = operation,
+                Quantity = vol
+            };
 
-                if (operation == Operation.Buy)
-                    order.Condition = Condition.MoreOrEqual;
-                else
-                    order.Condition = Condition.LessOrEqual;
+            if (operation == Operation.Buy)
+                order.Condition = Condition.MoreOrEqual;
+            else
+                order.Condition = Condition.LessOrEqual;
 
-                DebugLog("Выставляем стоп-заявку на покупку, по цене:" + price + "...", LogType.Info);
-                long transID = await quik.StopOrders.CreateStopOrder(order).ConfigureAwait(false);
-                if (transID > 0)
-                {
-                    DebugLog("Стоп-заявка выставлена. ID транзакции - " + transID, LogType.Info);
-                    Thread.Sleep(500);
-                    try
-                    {
-                        List<StopOrder> StopOrders = GetStopOrdersTable();
-                        foreach (StopOrder stoporder in StopOrders)
-                        {
-                            if (stoporder.TransId == transID && stoporder.ClassCode == Tool.ClassCode && stoporder.SecCode == Tool.SecurityCode)
-                            {
-                                DebugLog("Стоп-заявка выставлена. Номер стоп-заявки - " + stoporder.OrderNum, LogType.Info);
-                                return stoporder;
-                            }
-                        }
-                        return null;
-                    }
-                    catch
-                    {
-                        DebugLog("Ошибка получения таблицы стоп-заявок.", LogType.Error);
-                        return null;
-                    }
-                }
-                else
-                {
-                    DebugLog("Неудачная попытка выставления стоп-заявки.", LogType.Error);
-                    return null;
-                }
-            }
-            catch
-            {
-                DebugLog("Ошибка выставления стоп-заявки.", LogType.Error);
-                return null;
-            }
+            return await quik.StopOrders.SendStopOrders(order).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -712,66 +704,29 @@ namespace TradingRobotsServer.Models.QuikConnector
             decimal takeprofit, decimal price, Operation operation, int vol,
             OffsetUnits offset_units = OffsetUnits.PRICE_UNITS, OffsetUnits spread_unit = OffsetUnits.PRICE_UNITS)
         {
-            try
+            StopOrder order = new StopOrder()
             {
-                StopOrder order = new StopOrder()
-                {
-                    Account = Tool.AccountID,
-                    ClassCode = Tool.ClassCode,
-                    ClientCode = clientCode,
-                    SecCode = Tool.SecurityCode,
-                    Offset = offset,
-                    OffsetUnit = offset_units,
-                    Spread = spread,
-                    SpreadUnit = spread_unit,
-                    StopOrderType = StopOrderType.TakeProfit,
-                    ConditionPrice = Math.Round(takeprofit, Tool.PriceAccuracy),
-                    Price = Math.Round(price, Tool.PriceAccuracy),
-                    Operation = operation,
-                    Quantity = vol
-                };
+                Account = Tool.AccountID,
+                ClassCode = Tool.ClassCode,
+                ClientCode = clientCode,
+                SecCode = Tool.SecurityCode,
+                Offset = offset,
+                OffsetUnit = offset_units,
+                Spread = spread,
+                SpreadUnit = spread_unit,
+                StopOrderType = StopOrderType.TakeProfit,
+                ConditionPrice = Math.Round(takeprofit, Tool.PriceAccuracy),
+                Price = Math.Round(price, Tool.PriceAccuracy),
+                Operation = operation,
+                Quantity = vol
+            };
 
-                if (operation == Operation.Sell)
-                    order.Condition = Condition.MoreOrEqual;
-                else
-                    order.Condition = Condition.LessOrEqual;
+            if (operation == Operation.Sell)
+                order.Condition = Condition.MoreOrEqual;
+            else
+                order.Condition = Condition.LessOrEqual;
 
-                DebugLog("Выставляем тейк-профит, по цене:" + price + "...", LogType.Info);
-                long transID = await quik.StopOrders.CreateStopOrder(order).ConfigureAwait(false);
-                if (transID > 0)
-                {
-                    DebugLog("Стоп-заявка выставлена. ID транзакции - " + transID, LogType.Info);
-                    Thread.Sleep(500);
-                    try
-                    {
-                        List<StopOrder> StopOrders = GetStopOrdersTable();
-                        foreach (StopOrder stoporder in StopOrders)
-                        {
-                            if (stoporder.TransId == transID && stoporder.ClassCode == Tool.ClassCode && stoporder.SecCode == Tool.SecurityCode)
-                            {
-                                DebugLog("Стоп-заявка выставлена. Номер стоп-заявки - " + stoporder.OrderNum, LogType.Info);
-                                return stoporder;
-                            }
-                        }
-                        return null;
-                    }
-                    catch
-                    {
-                        DebugLog("Ошибка получения таблицы стоп-заявок.", LogType.Error);
-                        return null;
-                    }
-                }
-                else
-                {
-                    DebugLog("Неудачная попытка выставления стоп-заявки.", LogType.Error);
-                    return null;
-                }
-            }
-            catch
-            {
-                DebugLog("Ошибка выставления стоп-заявки.", LogType.Error);
-                return null;
-            }
+            return await quik.StopOrders.SendStopOrders(order).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -791,8 +746,6 @@ namespace TradingRobotsServer.Models.QuikConnector
             decimal stoploss, decimal price, Operation operation, int vol,
             OffsetUnits offset_units = OffsetUnits.PRICE_UNITS, OffsetUnits spread_unit = OffsetUnits.PRICE_UNITS)
         {
-            try
-            {
                 StopOrder order = new StopOrder()
                 {
                     Account = Tool.AccountID,
@@ -815,42 +768,8 @@ namespace TradingRobotsServer.Models.QuikConnector
                 else
                     order.Condition = Condition.MoreOrEqual;
 
-                DebugLog("Выставляем стоп-лимит, по цене: " + price + "...", LogType.Info);
-                long transID = await quik.StopOrders.CreateStopOrder(order).ConfigureAwait(false);
-                if (transID > 0)
-                {
-                    DebugLog("Стоп-заявка выставлена. ID транзакции - " + transID, LogType.Info);
-                    Thread.Sleep(500);
-                    try
-                    {
-                        List<StopOrder> StopOrders = GetStopOrdersTable();
-                        foreach (StopOrder stoporder in StopOrders)
-                        {
-                            if (stoporder.TransId == transID && stoporder.ClassCode == Tool.ClassCode && stoporder.SecCode == Tool.SecurityCode)
-                            {
-                                DebugLog("Стоп-заявка выставлена. Номер стоп-заявки - " + stoporder.OrderNum, LogType.Info);
-                                return stoporder;
-                            }
-                        }
-                        return null;
-                    }
-                    catch
-                    {
-                        DebugLog("Ошибка получения таблицы стоп-заявок.", LogType.Error);
-                        return null;
-                    }
-                }
-                else
-                {
-                    DebugLog("Неудачная попытка выставления стоп-заявки.", LogType.Error);
-                    return null;
-                }
-            }
-            catch
-            {
-                DebugLog("Ошибка выставления стоп-заявки.", LogType.Error);
-                return null;
-            }
+                Logs.DebugLog("Выставляем стоп-лимит, по цене: " + price + "...", LogType.Info);
+                return await quik.StopOrders.SendStopOrders(order).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -865,13 +784,13 @@ namespace TradingRobotsServer.Models.QuikConnector
                 List<Order> Orders = GetOrdersTable();
                 int index_order = Orders.FindIndex(o => o.OrderNum == id_order);
                 if (Orders[index_order] != null && Orders[index_order].OrderNum > 0)
-                    DebugLog("Снимаем заявку на покупку с номером - " + Orders[index_order].OrderNum + "...", LogType.Info);
+                    Logs.DebugLog("Снимаем заявку на покупку с номером - " + Orders[index_order].OrderNum + "...", LogType.Info);
                 await quik.Orders.KillOrder(Orders[index_order]);
-                DebugLog("Заявка снята.", LogType.Info);
+                Logs.DebugLog("Заявка снята.", LogType.Info);
             }
             catch
             {
-                DebugLog("Ошибка снятия заявки.", LogType.Error);
+                Logs.DebugLog("Ошибка снятия заявки.", LogType.Error);
             }
         }
 
@@ -886,46 +805,13 @@ namespace TradingRobotsServer.Models.QuikConnector
             {
                 List<StopOrder> StopOrders = GetStopOrdersTable();
                 int index_order = StopOrders.FindIndex(o => o.OrderNum == id_order);
-                if (StopOrders[index_order] != null && StopOrders[index_order].OrderNum > 0) DebugLog("Снимаем стоп-заявку с номером - " + StopOrders[index_order].OrderNum + "...", LogType.Info);
+                if (StopOrders[index_order] != null && StopOrders[index_order].OrderNum > 0) Logs.DebugLog("Снимаем стоп-заявку с номером - " + StopOrders[index_order].OrderNum + "...", LogType.Info);
                 await quik.StopOrders.KillStopOrder(StopOrders[index_order]);
-                DebugLog("Заявка снята.", LogType.Info);
+                Logs.DebugLog("Заявка снята.", LogType.Info);
             }
             catch
             {
-                DebugLog("Ошибка снятия заявки.", LogType.Error);
-            }
-        }
-
-        #endregion
-
-        #region Лог
-
-        public void DebugLog(string log_string, LogType log_type)
-        {
-            Debug.WriteLine(log_string);
-            //mainWindow.Log += log_string + "\r\n";
-
-            switch (log_type)
-            {
-                case LogType.Null:
-                    break;
-                case LogType.Debug:
-                    logger.Debug(log_string);
-                    break;
-                case LogType.Info:
-                    logger.Info(log_string);
-                    break;
-                case LogType.Warn:
-                    logger.Warn(log_string);
-                    break;
-                case LogType.Error:
-                    logger.Error(log_string);
-                    break;
-                case LogType.Fatal:
-                    logger.Fatal(log_string);
-                    break;
-                default:
-                    break;
+                Logs.DebugLog("Ошибка снятия заявки.", LogType.Error);
             }
         }
 

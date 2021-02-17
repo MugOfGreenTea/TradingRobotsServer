@@ -58,7 +58,7 @@ namespace TradingRobotsServer.Models.Logic.Base
         /// <returns></returns>
         public abstract OrderInfo RecalculateTakeProfit(Deal deal);
 
-        public abstract void ProcessingExecutedOrders(Order order);
-        public abstract void ProcessingExecutedStopOrders(StopOrder stoporder);
+        public abstract bool ProcessingExecutedOrders(Order order);
+        public abstract bool ProcessingExecutedStopOrders(StopOrder stoporder);
     }
 }

@@ -2,6 +2,7 @@
 using QuikSharp.DataStructures;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using TradingRobotsServer.Models.Structures;
 using Candle = TradingRobotsServer.Models.Structures.Candle;
@@ -10,7 +11,7 @@ namespace TradingRobotsServer.Models.QuikConnector
 {
     public class Tool
     {
-        private Char separator = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator[0];
+        private Char separator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator[0];
         private Quik quik;
 
         //string clientCode;
