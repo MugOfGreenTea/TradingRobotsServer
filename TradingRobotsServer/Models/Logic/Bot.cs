@@ -12,6 +12,7 @@ using System.Linq;
 using TradingRobotsServer.Models.Support;
 using NLog;
 using System.Threading.Tasks;
+using QuikSharp.DataStructures;
 
 namespace TradingRobotsServer.Models.Logic
 {
@@ -41,14 +42,22 @@ namespace TradingRobotsServer.Models.Logic
         #region Подписки
 
         /// <summary>
-        /// Подписка на данные от инструмента.
+        /// Подписка на новые свечи от инструмента.
         /// </summary>
-        public void SubsribeNewDataTool()
+        public void SubsribeNewCandleToolAsync()
         {
             Tool.NewCandle += NewCandle;
-            Tool.GetHistoricalCandlesAsync(20);
+            Tool.GetHistoricalCandlesAsync(10);
+            DebugLog("Bot: Подписка на новые свечки от Tool завершена.");
+        }
+
+        /// <summary>
+        /// Подписка на новые тики от инструмента.
+        /// </summary>
+        public void SubsribeNewTickTool()
+        {
             Tool.NewTick += NewTick;
-            DebugLog("Bot: Подписка на новые данные от Tool завершена.");
+            DebugLog("Bot: Подписка на новые тики от Tool завершена.");
         }
 
         /// <summary>
@@ -57,7 +66,7 @@ namespace TradingRobotsServer.Models.Logic
         public void SubsribeNewOrderStrategy()
         {
             Strategy.NewOrder += NewOrder;
-            DebugLog("Подписка на новые ордера от Strategy завершена.");
+            DebugLog("Bot: Подписка на новые ордера от Strategy завершена.");
         }
 
         /// <summary>
@@ -87,9 +96,8 @@ namespace TradingRobotsServer.Models.Logic
         {
             try
             {
-                DebugLog("Подписываемся на получение информации о новой заявке или изменения выставенной заявки...");
                 QuikConnecting.quik.Events.OnOrder += OnOrder;
-                DebugLog("Подписка включена...");
+                DebugLog("Подписка на получение информации о новой заявке или изменения выставенной заявки включена...");
                 return true;
             }
             catch
@@ -107,9 +115,8 @@ namespace TradingRobotsServer.Models.Logic
         {
             try
             {
-                DebugLog("Подписываемся на изменение позиции в стоп-заявках...");
                 QuikConnecting.quik.Events.OnStopOrder += OnStopOrder;
-                DebugLog("Подписка включена...");
+                DebugLog("Подписка на изменение позиции в стоп-заявках включена...");
                 return true;
             }
             catch
@@ -118,6 +125,28 @@ namespace TradingRobotsServer.Models.Logic
                 return false;
             }
         }
+
+        /// <summary>
+        /// Подписка на получение изменений в таблице текущий торгов.
+        /// </summary>
+        /// <returns></returns>
+        public bool SubscribeOnParam()
+        {
+            try
+            {
+                QuikConnecting.quik.Events.OnParam += OnParam;
+                Logs.DebugLog("Подписка на получение информации о новой сделке включена...", LogType.Info);
+                return true;
+            }
+            catch
+            {
+                Logs.DebugLog("Подписка на получение информации о новой сделке не удалась.", LogType.Error);
+                return false;
+            }
+        }
+
+
+
 
         #endregion
 
@@ -129,9 +158,11 @@ namespace TradingRobotsServer.Models.Logic
         /// Обработчик события новой свечи.
         /// </summary>
         /// <param name="candle"></param>
-        private void NewCandle(Candle candle)
+        private void NewCandle(Structures.Candle candle)
         {
             Strategy.AnalysisCandle(candle);
+            if (PoolOrders.Count != 0)
+                DistributionOrders();
         }
 
         /// <summary>
@@ -158,6 +189,20 @@ namespace TradingRobotsServer.Models.Logic
 
         }
 
+        /// <summary>
+        /// Обработчик события изменения Таблицы текущих торгов.
+        /// </summary>
+        /// <param name="param"></param>
+        private void OnParam(Param param)
+        {
+            if (param.SecCode == Tool.SecurityCode)
+            {
+                decimal status_cliring = Convert.ToDecimal(QuikConnecting.GetParamEx(param, ParamNames.CLSTATE));
+                if (Tool.StatusClearing != (StatusClearing)status_cliring)
+                    Tool.UpdateParam();
+            }
+        }
+
         private long temp_id_order = -1;
         /// <summary>
         /// Обработчик события получение информации о новой заявке или изменения выставенной заявки.
@@ -169,8 +214,9 @@ namespace TradingRobotsServer.Models.Logic
             {
                 temp_id_order = order.OrderNum;
                 //await Task.Delay(20);
-                //Strategy.ProcessingExecutedOrders(order);
-                PoolOrders.Add(new OrderInPool(order));
+                bool check = Strategy.ProcessingExecutedOrders(order);
+                if (check)
+                    PoolOrders.Add(new OrderInPool(order));
             }
         }
 
@@ -185,8 +231,9 @@ namespace TradingRobotsServer.Models.Logic
             {
                 temp_id_stoporder = stoporder.OrderNum;
                 //await Task.Delay(20);
-                //Strategy.ProcessingExecutedStopOrders(stoporder);
-                PoolOrders.Add(new OrderInPool(stoporder));
+                bool check = Strategy.ProcessingExecutedStopOrders(stoporder);
+                if (check)
+                    PoolOrders.Add(new OrderInPool(stoporder));
             }
         }
 
@@ -249,6 +296,7 @@ namespace TradingRobotsServer.Models.Logic
                     SendTakeProfitAndStopLimitOrdersAsync(deal);
                     break;
                 case Command.TakeOffOrder:
+                    TakeOffOrderAsync(deal);
                     break;
                 case Command.TakeOffStopLimitOrder:
                     TakeOffStopLimitOrderAsync(deal);
@@ -276,14 +324,14 @@ namespace TradingRobotsServer.Models.Logic
                     continue;
 
                 Order temp_order;
+                StopOrder temp_stoporder;
                 switch (deal.OrdersInfo[i].TypeOrder)
                 {
                     case TypeOrder.Null:
                         break;
                     case TypeOrder.LimitOrder:
                         if (deal.OrdersInfo[i].Vol == -1)
-                            deal.OrdersInfo[i].Vol = ManagementOfRisks.CalculationCountLotsToTradeFutures(QuikConnecting, Tool, deal, deal.StopLoss, 1, Tool.Lot);
-                        //temp_order = QuikConnecting.LimitOrder(Tool, deal.OrdersInfo[i].Operation, deal.OrdersInfo[i].Price, 3/*deal.OrdersInfo[i].Vol*/).Result;
+                            deal.OrdersInfo[i].Vol = ManagementOfRisks.CalculationCountLotsToTradeFutures(QuikConnecting, Tool, deal, deal.OrdersInfo[i].Price, deal.StopLoss, 1, Tool.Lot, 3);
 
                         temp_order = await QuikConnecting.quik.Orders.SendLimitOrder(Tool.ClassCode, Tool.SecurityCode, Tool.AccountID,
                             deal.Operation, Math.Round(deal.OrdersInfo[i].Price, Tool.PriceAccuracy), deal.OrdersInfo[i].Vol);
@@ -292,7 +340,6 @@ namespace TradingRobotsServer.Models.Logic
                         {
                             deal.OrdersInfo[i].IDOrder = temp_order.OrderNum;
                             deal.OrdersInfo[i].IssueStatus = State.Completed;
-                            deal.Status = StatusDeal.Open;
                             NewDeal?.Invoke(deal, Command.SendOrder);
                         }
                         else
@@ -308,6 +355,41 @@ namespace TradingRobotsServer.Models.Logic
                             deal.OrdersInfo[i].IDOrder = temp_order.OrderNum;
                             deal.OrdersInfo[i].IssueStatus = State.Completed;
                             deal.Status = StatusDeal.Open;
+                            NewDeal?.Invoke(deal, Command.SendOrder);
+                        }
+                        else
+                        {
+                            //впилить защиту от не открытой сделки
+                        }
+                        break;
+                    case TypeOrder.TakeProfit:
+                        if (deal.OrdersInfo[i].Vol == -1)
+                            deal.OrdersInfo[i].Vol = ManagementOfRisks.CalculationCountLotsToTradeFutures(QuikConnecting, Tool, deal, deal.OrdersInfo[i].Price, deal.StopLoss, 1, Tool.Lot, 3);
+
+                        temp_stoporder = await QuikConnecting.TakeProfitOrder(Tool, 0, 0, deal.OrdersInfo[i].Price, deal.OrdersInfo[i].Price,
+                            deal.OrdersInfo[i].Operation, deal.OrdersInfo[i].Vol);
+
+                        if (temp_stoporder.TransId > 0)
+                        {
+                            deal.OrdersInfo[i].IDOrder = temp_stoporder.OrderNum;
+                            deal.OrdersInfo[i].IssueStatus = State.Completed;
+                            NewDeal?.Invoke(deal, Command.SendOrder);
+                        }
+                        else
+                        {
+                            //впилить защиту от не открытой сделки
+                        }
+                        break;
+                    case TypeOrder.StopLimit:
+                        if (deal.OrdersInfo[i].Vol == -1)
+                            deal.OrdersInfo[i].Vol = ManagementOfRisks.CalculationCountLotsToTradeFutures(QuikConnecting, Tool, deal, deal.OrdersInfo[i].Price, deal.StopLoss, 1, Tool.Lot, 3);
+
+                        temp_stoporder = await QuikConnecting.StopLimitOrder(Tool, 0m, 0m, deal.OrdersInfo[i].Price, deal.OrdersInfo[i].Price, deal.OrdersInfo[i].Operation, deal.OrdersInfo[i].Vol);
+
+                        if (temp_stoporder.TransId > 0)
+                        {
+                            deal.OrdersInfo[i].IDOrder = temp_stoporder.OrderNum;
+                            deal.OrdersInfo[i].IssueStatus = State.Completed;
                             NewDeal?.Invoke(deal, Command.SendOrder);
                         }
                         else
@@ -424,6 +506,24 @@ namespace TradingRobotsServer.Models.Logic
                         break;
                     default:
                         break;
+                }
+            }
+        }
+
+        private async Task TakeOffOrderAsync(Deal deal)
+        {
+            for (int i = 0; i < deal.OrdersInfo.Count; i++)
+            {
+                if (deal.OrdersInfo[i].ExecutionStatus == State.Canceled && (deal.OrdersInfo[i].TypeOrder == TypeOrder.LimitOrder || deal.OrdersInfo[i].TypeOrder == TypeOrder.MarketOrder))
+                {
+                    await QuikConnecting.TakeOffOrder(deal.OrdersInfo[i].IDOrder);
+                    NewDeal?.Invoke(deal, Command.TakeOffOrder);
+                }
+
+                if (deal.OrdersInfo[i].ExecutionStatus == State.Canceled && (deal.OrdersInfo[i].TypeOrder == TypeOrder.TakeProfit || deal.OrdersInfo[i].TypeOrder == TypeOrder.StopLimit))
+                {
+                    await QuikConnecting.TakeOffStopOrder(deal.OrdersInfo[i].IDOrder);
+                    NewDeal?.Invoke(deal, Command.TakeOffOrder);
                 }
             }
         }

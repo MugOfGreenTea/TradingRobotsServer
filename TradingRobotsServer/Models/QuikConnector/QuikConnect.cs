@@ -50,7 +50,7 @@ namespace TradingRobotsServer.Models.QuikConnector
                     try
                     {
                         Logs.DebugLog("Получаем статус соединения с сервером....", LogType.Info);
-                        if (CallQuikConnecting(ref quik))
+                        if (CallQuikConnecting())
                         {
                             Logs.DebugLog("Соединение с сервером установлено.", LogType.Info);
                             return true;
@@ -178,6 +178,10 @@ namespace TradingRobotsServer.Models.QuikConnector
         {
             return quik.Service.IsConnected().Result;
         }
+        public bool CallQuikConnecting()
+        {
+            return quik.Service.IsConnected().Result;
+        }
 
         public static bool CallSubscribeCandle(ref Quik quik, ref Tool tool, CandleInterval timeframe)
         {
@@ -255,6 +259,18 @@ namespace TradingRobotsServer.Models.QuikConnector
         {
             FuturesLimits futuresLimits = quik.Trading.GetFuturesLimit(firm_id, acc_id, limit_type, curr_code).Result;
             return Convert.ToDecimal(futuresLimits.CbpLPlanned);
+        }
+
+        /// <summary>
+        /// Получение информации из таблицы текущих торгов.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="param"></param>
+        /// <param name="param_names"></param>
+        /// <returns></returns>
+        public string GetParamEx(Param param, ParamNames param_names)
+        {
+            return quik.Trading.GetParamEx(param.ClassCode, param.SecCode, param_names).Result.ParamValue.Replace('.', separator);
         }
 
         #endregion
@@ -479,7 +495,7 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// <param name="orderbook"></param>
         private void OnQuoteDo(OrderBook orderbook)
         {
-            //Logs.DebugLog("Произошло изменение стакана", LogType.Info);
+
         }
 
         /// <summary>
@@ -488,13 +504,7 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// <param name="candle"></param>
         private void OnNewCandle(Candle candle)
         {
-            //if (Robot.Tool.Candles != null && candle.SecCode == Robot.Tool.SecurityCode && candle.ClassCode == Robot.Tool.ClassCode && candle.Interval == Robot.Tool.Interval)
-            //{
-            //    Robot.Tool.AddNewCandle(new Structures.Candle(candle));
 
-            //QuikDateTime temp = candle.Datetime;
-            //Logs.DebugLog("Получена новая свеча из квика от: " + temp.day + "." + temp.month + "." + temp.year + " " + temp.hour + "-" + temp.min + "-" + temp.sec + ", значения: " + candle.ToString());
-            //}
         }
 
         /// <summary>
@@ -503,25 +513,12 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// <param name="stoporder"></param>
         private void OnStopOrderDo(StopOrder stoporder)
         {
-            try
-            {
-                if (stoporder != null && stoporder.OrderNum > 0)
-                {
-                    //Trace.WriteLine("Trace: Вызвано событие OnStopOrder - 'Time' = " + DateTime.Now + ", 'OrderNum' = " + stoporder.OrderNum + ", 'State' = " + stoporder.State);
-                    Logs.DebugLog("Вызвано событие OnStopOrder - 'Time' = " + DateTime.Now + ", 'OrderNum' = " + stoporder.OrderNum + ", 'State' = " + stoporder.State, LogType.Info);
-                    Logs.DebugLog("Вызвано событие OnStopOrder - связ. заявка: " + stoporder.LinkedOrder, LogType.Info);
-                }
-            }
-            catch (Exception er)
-            {
-                //Trace.WriteLine("Trace: Ошибка в OnStopOrderDo() - " + er.ToString());
-                Logs.DebugLog("Trace: Ошибка в OnStopOrderDo() - " + er.ToString(), LogType.Error);
-            }
+
         }
 
         private void OnTrade(Trade trade)
         {
-            Logs.DebugLog("Произошло OnTrade.", LogType.Info);
+
         }
 
         private void OnTransReply(TransactionReply reply)
@@ -531,9 +528,7 @@ namespace TradingRobotsServer.Models.QuikConnector
 
         private void OnParam(Param param)
         {
-            Debug.WriteLine(param.SecCode);
-            Debug.WriteLine(quik.Trading.GetParamEx(param.ClassCode, param.SecCode, ParamNames.PRICEMAX).Result.ParamValue.Replace('.', separator));
-            Debug.WriteLine(quik.Trading.GetParamEx(param.ClassCode, param.SecCode, ParamNames.PRICEMIN).Result.ParamValue.Replace('.', separator));
+
         }
 
         #endregion
@@ -746,30 +741,30 @@ namespace TradingRobotsServer.Models.QuikConnector
             decimal stoploss, decimal price, Operation operation, int vol,
             OffsetUnits offset_units = OffsetUnits.PRICE_UNITS, OffsetUnits spread_unit = OffsetUnits.PRICE_UNITS)
         {
-                StopOrder order = new StopOrder()
-                {
-                    Account = Tool.AccountID,
-                    ClassCode = Tool.ClassCode,
-                    ClientCode = clientCode,
-                    SecCode = Tool.SecurityCode,
-                    Offset = offset,
-                    OffsetUnit = offset_units,
-                    Spread = spread,
-                    SpreadUnit = spread_unit,
-                    StopOrderType = StopOrderType.StopLimit,
-                    ConditionPrice = Math.Round(stoploss, Tool.PriceAccuracy),
-                    Price = Math.Round(price, Tool.PriceAccuracy),
-                    Operation = operation,
-                    Quantity = vol
-                };
+            StopOrder order = new StopOrder()
+            {
+                Account = Tool.AccountID,
+                ClassCode = Tool.ClassCode,
+                ClientCode = clientCode,
+                SecCode = Tool.SecurityCode,
+                Offset = offset,
+                OffsetUnit = offset_units,
+                Spread = spread,
+                SpreadUnit = spread_unit,
+                StopOrderType = StopOrderType.StopLimit,
+                ConditionPrice = Math.Round(stoploss, Tool.PriceAccuracy),
+                Price = Math.Round(price, Tool.PriceAccuracy),
+                Operation = operation,
+                Quantity = vol
+            };
 
-                if (operation == Operation.Sell)
-                    order.Condition = Condition.LessOrEqual;
-                else
-                    order.Condition = Condition.MoreOrEqual;
+            if (operation == Operation.Sell)
+                order.Condition = Condition.LessOrEqual;
+            else
+                order.Condition = Condition.MoreOrEqual;
 
-                Logs.DebugLog("Выставляем стоп-лимит, по цене: " + price + "...", LogType.Info);
-                return await quik.StopOrders.SendStopOrders(order).ConfigureAwait(false);
+            Logs.DebugLog("Выставляем стоп-лимит, по цене: " + price + "...", LogType.Info);
+            return await quik.StopOrders.SendStopOrders(order).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -783,14 +778,12 @@ namespace TradingRobotsServer.Models.QuikConnector
             {
                 List<Order> Orders = GetOrdersTable();
                 int index_order = Orders.FindIndex(o => o.OrderNum == id_order);
-                if (Orders[index_order] != null && Orders[index_order].OrderNum > 0)
-                    Logs.DebugLog("Снимаем заявку на покупку с номером - " + Orders[index_order].OrderNum + "...", LogType.Info);
                 await quik.Orders.KillOrder(Orders[index_order]);
-                Logs.DebugLog("Заявка снята.", LogType.Info);
+                Logs.DebugLog("Заявка №" + Orders[index_order].OrderNum + " снята.", LogType.Info);
             }
             catch
             {
-                Logs.DebugLog("Ошибка снятия заявки.", LogType.Error);
+                Logs.DebugLog("Ошибка снятия заявки № " + id_order + ".", LogType.Error);
             }
         }
 
@@ -805,13 +798,12 @@ namespace TradingRobotsServer.Models.QuikConnector
             {
                 List<StopOrder> StopOrders = GetStopOrdersTable();
                 int index_order = StopOrders.FindIndex(o => o.OrderNum == id_order);
-                if (StopOrders[index_order] != null && StopOrders[index_order].OrderNum > 0) Logs.DebugLog("Снимаем стоп-заявку с номером - " + StopOrders[index_order].OrderNum + "...", LogType.Info);
                 await quik.StopOrders.KillStopOrder(StopOrders[index_order]);
-                Logs.DebugLog("Заявка снята.", LogType.Info);
+                Logs.DebugLog("Заявка №" + StopOrders[index_order].OrderNum + " снята.", LogType.Info);
             }
             catch
             {
-                Logs.DebugLog("Ошибка снятия заявки.", LogType.Error);
+                Logs.DebugLog("Ошибка снятия заявки № " + id_order + ".", LogType.Error);
             }
         }
 

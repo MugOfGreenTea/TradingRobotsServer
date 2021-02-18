@@ -1,11 +1,11 @@
-﻿using System;
+﻿using QuikSharp.DataStructures;
+using System;
+using System.Diagnostics;
 using System.Threading;
-using Timer = System.Timers.Timer;
-using QuikSharp.DataStructures;
-using TradingRobotsServer.Models.QuikConnector;
 using TradingRobotsServer.Models.Logic;
 using TradingRobotsServer.Models.Logic.Base;
-using System.Diagnostics;
+using TradingRobotsServer.Models.QuikConnector;
+using Timer = System.Timers.Timer;
 
 namespace TradingRobotsServer.Models
 {
@@ -14,9 +14,17 @@ namespace TradingRobotsServer.Models
         public QuikConnect quik_connect;
         public Tool Tool;
         public Bot Bot;
-        public Thread Thread;
-        public Timer Timer;
+        public Thread ThreadToolStrategy;
+        public Timer TimerToolStrategy;
+        public Thread ThreadConnectQuik;
+        public Timer TimerConnectQuik;
+        public Thread ThreadWaitingForConnection;
+        public Timer TimerWaitingForConnection;
         public Strategy Strategy;
+
+        private string ToolName;
+        private CandleInterval Interval;
+        private string Param;
 
         #region - Проверки
 
@@ -34,8 +42,19 @@ namespace TradingRobotsServer.Models
         public void Run(int port, string host, string tool_name, CandleInterval candle_interval, string param)
         {
             InitialQuik();
-            Connect(port, host, tool_name, candle_interval);
-            RunStrategy(param);
+            ConnectQuik(port, host);
+            if (check_quik_connecting)
+            {
+                ConnectTool(tool_name, candle_interval);
+                RunStrategy(param);
+            }
+            else
+            {
+                ToolName = tool_name;
+                Interval = candle_interval;
+                Param = param;
+                WaitingForConnecting();
+            }
         }
 
         private void InitialQuik()
@@ -43,9 +62,60 @@ namespace TradingRobotsServer.Models
             quik_connect = new QuikConnect();
         }
 
-        private void Connect(int port, string host, string tool_name, CandleInterval candle_interval)
+        private void ConnectQuik(int port, string host)
         {
             check_quik_connecting = quik_connect.QuikConnecting(port, host);
+
+            ThreadConnectQuik = new Thread(new ThreadStart(StartTimerQuikConnect));
+            ThreadConnectQuik.Start();
+        }
+
+        private void WaitingForConnecting()
+        {
+            ThreadWaitingForConnection = new Thread(new ThreadStart(StartTimerWaitingForConnection));
+            ThreadWaitingForConnection.Start();
+        }
+
+        private void StartTimerQuikConnect()
+        {
+            TimerConnectQuik = new Timer();
+            TimerConnectQuik.Interval = 5000;
+            TimerConnectQuik.Elapsed += CallQuikConnect;
+            TimerConnectQuik.Start();
+        }
+
+        private void CallQuikConnect(object sender, EventArgs e)
+        {
+            check_quik_connecting = quik_connect.CallQuikConnecting();
+            if (!check_quik_connecting)
+                WaitingForConnecting();
+            Debug.WriteLine("Соединение с сервером установленно.");
+        }
+
+        private void StartTimerWaitingForConnection()
+        {
+            TimerConnectQuik = new Timer();
+            TimerConnectQuik.Interval = 60000;
+            TimerConnectQuik.Elapsed += CallWaitingForConnection;
+            TimerConnectQuik.Start();
+        }
+
+        private void CallWaitingForConnection(object sender, EventArgs e)
+        {
+            if (check_quik_connecting)
+            {
+                ConnectTool(ToolName, Interval);
+                RunStrategy(Param);
+                TimerWaitingForConnection.Stop();
+                ThreadWaitingForConnection.Abort();
+                TimerWaitingForConnection = null;
+                ThreadWaitingForConnection = null;
+            }
+            Debug.WriteLine("Ожидание подключения к серверу.");
+        }
+
+        private void ConnectTool(string tool_name, CandleInterval candle_interval)
+        {
             if (check_quik_connecting)
             {
                 Tool = quik_connect.ToolConnectingReturn(tool_name, candle_interval);
@@ -55,22 +125,17 @@ namespace TradingRobotsServer.Models
             {
                 check_subscribe_orderbook = quik_connect.SubscribeOrderBook(ref Tool);
                 check_subscribe_tool_candles = quik_connect.SubscribeToolReceiveCandles(ref Tool, candle_interval);
-                check_subscribe_candles = quik_connect.SubscribeReceiveCandles();
-                //check_subscribe_futures_client_holding = quik_connect.SubscribeOnFuturesClientHolding();
-                //check_subscribe_depo_limit = quik_connect.SubscribeOnDepoLimit();
-                //quik_connect.SubscribeOnTransReply();
-                quik_connect.SubscribeOnParam();
+
                 Tool.SubscribeNewCandle();//подписка Tool на новые свечи от QuikConnect
             }
         }
 
         private void RunStrategy(string param)
         {
-            if (check_subscribe_tool_candles && check_subscribe_candles && check_subscribe_orderbook
-                    /*&& check_subscribe_futures_client_holding && check_subscribe_depo_limit && check_subscribe_stoplimit*/)
+            if (check_subscribe_tool_candles && check_subscribe_orderbook)
             {
-                Thread = new Thread(new ThreadStart(StartTimer));
-                Thread.Start();
+                ThreadToolStrategy = new Thread(new ThreadStart(StartTimerCallLastPrice));
+                //ThreadToolStrategy.Start();
             }
 
             Strategy = new SetPositionByCandleHighLowStrategy(param, Bot);
@@ -78,27 +143,26 @@ namespace TradingRobotsServer.Models
 
             Strategy.Bot = Bot;
             Strategy.SubsribeNewDeal();
-            Bot.SubsribeNewDataTool();//подписка Bot на новые свечи от Tool
+            Bot.SubsribeNewCandleToolAsync();//подписка Bot на новые свечи от Tool
             Bot.SubsribeNewOrderStrategy();//подписка Bot на новые заявки от Strategy
-            //Bot.SubsribeOnTrade();
-            Bot.SubsribeOnOrder();
-            Bot.SubscribeOnStopOrder();
-            Tool.CallLastPrice();
+            Bot.SubsribeOnOrder();//подписка Bot на новые ордера
+            Bot.SubscribeOnStopOrder();//подписка Bot на новые стопордера
 
             int i = 5;
-            Debug.WriteLine(i++ + i++);
+            Debug.WriteLine(++i + ++i);
         }
 
-        private void StartTimer()
+        private void StartTimerCallLastPrice()
         {
-            Timer = new Timer();
-            Timer.Interval = 500;
-            Timer.Elapsed += CallLastPrice;
-            Timer.Start();
+            TimerToolStrategy = new Timer();
+            TimerToolStrategy.Interval = 500;
+            TimerToolStrategy.Elapsed += CallLastPrice;
+            TimerToolStrategy.Start();
         }
 
         private void CallLastPrice(object sender, EventArgs e)
         {
+            Tool.CallLastPrice();
         }
     }
 }

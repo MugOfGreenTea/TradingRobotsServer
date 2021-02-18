@@ -69,4 +69,39 @@ namespace TradingRobotsServer.Models.Structures
         Error,
         Fatal
     }
+    public enum StatusClearing 
+    {
+        /// <summary>
+        /// Не определено
+        /// </summary>
+        Null,
+        /// <summary>
+        /// Основная сессия
+        /// </summary>
+        MainSession,
+        /// <summary>
+        /// Начался промклиринг
+        /// </summary>
+        IndustrialClearingStarted,
+        /// <summary>
+        /// Завершился промклиринг, началась основная сессия
+        /// </summary>
+        IndustrialClearingCompleted,
+        /// <summary>
+        /// Начался основной клиринг
+        /// </summary>
+        MainClearingStarted,
+        /// <summary>
+        /// Основной клиринг: новая сессия назначена
+        /// </summary>
+        MainClearingNewSessionIsScheduled,
+        /// <summary>
+        /// Завершился основной клиринг, началась вечерняя сессия
+        /// </summary>
+        MainClearingCompleted,
+        /// <summary>
+        /// Завершилась вечерняя сессия
+        /// </summary>
+        EveningSessionEnded
+    }
 }

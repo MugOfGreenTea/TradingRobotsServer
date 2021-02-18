@@ -2,6 +2,7 @@
 using QuikSharp.DataStructures;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using TradingRobotsServer.Models.Structures;
@@ -75,10 +76,8 @@ namespace TradingRobotsServer.Models.QuikConnector
         public decimal GuaranteeProvidingBuy
         {
             get
-            {
-                guaranteeProvidingbuy = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.BUYDEPO).Result.ParamValue.Replace('.', separator));
-                return guaranteeProvidingbuy;
-            }
+            => guaranteeProvidingbuy;
+            set => guaranteeProvidingbuy = value;
         }
 
         private decimal guaranteeProvidingsell;
@@ -88,10 +87,30 @@ namespace TradingRobotsServer.Models.QuikConnector
         public decimal GuaranteeProvidingSell
         {
             get
-            {
-                guaranteeProvidingsell = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.SELLDEPO).Result.ParamValue.Replace('.', separator));
-                return guaranteeProvidingsell;
-            }
+            => guaranteeProvidingsell;
+            set => guaranteeProvidingsell = value;
+        }
+
+        private decimal price_max;
+        /// <summary>
+        /// Максимальная возможная цена.
+        /// </summary>
+        public decimal PriceMax
+        {
+            get
+            => price_max;
+            set => price_max = value;
+        }
+
+        private decimal price_min;
+        /// <summary>
+        /// Минимальная возможная цена.
+        /// </summary>
+        public decimal PriceMin
+        {
+            get
+            => price_min;
+            set => price_min = value;
         }
 
         private decimal priceStep;
@@ -107,11 +126,8 @@ namespace TradingRobotsServer.Models.QuikConnector
         public decimal LastPrice
         {
             get
-            {
-                lastPrice = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.LAST).Result.ParamValue.Replace('.', separator));
-                NewTick?.Invoke(new Tick(securityCode, classCode, interval, lastPrice));
-                return lastPrice;
-            }
+            => lastPrice;
+            set => lastPrice = value;
         }
 
         private CandleInterval interval;
@@ -125,6 +141,86 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// Список котировок.
         /// </summary>
         public List<Candle> Candles => candles;
+
+        private DateTime start_morning_session;
+        /// <summary>
+        /// Начало утренней сессии.
+        /// </summary>
+        public DateTime StartMorningSession
+        {
+            get => start_morning_session;
+            set => start_morning_session = value;
+        }
+
+        private DateTime end_morning_session;
+        /// <summary>
+        /// Конец утренней сессии.
+        /// </summary>
+        public DateTime EndMorningSession
+        {
+            get => end_morning_session;
+            set => end_morning_session = value;
+        }
+
+        private DateTime start_main_session;
+        /// <summary>
+        /// Начало основной сессии.
+        /// </summary>
+        public DateTime StartMainSession
+        {
+            get => start_main_session;
+            set => start_main_session = value;
+        }
+
+        private DateTime end_main_session;
+        /// <summary>
+        /// Конеч основной сессии.
+        /// </summary>
+        public DateTime EndMainSession
+        {
+            get => end_main_session;
+            set => end_main_session = value;
+        }
+
+        private DateTime start_evening_session;
+        /// <summary>
+        /// Начало вечерней сессии.
+        /// </summary>
+        public DateTime StartEveningSession
+        {
+            get => start_evening_session;
+            set => start_evening_session = value;
+        }
+
+        private DateTime end_evening_session;
+        /// <summary>
+        /// Конец вечерней сессии.
+        /// </summary>
+        public DateTime EndevEningSession
+        {
+            get => end_evening_session;
+            set => end_evening_session = value;
+        }
+
+        private DateTime maturity_time;
+        /// <summary>
+        /// Время погашения.
+        /// </summary>
+        public DateTime MaturityTime
+        {
+            get => maturity_time;
+            set => maturity_time = value;
+        }
+
+        private decimal status_clearing;
+        /// <summary>
+        /// Статус клиринга.
+        /// </summary>
+        public StatusClearing StatusClearing 
+        { 
+            get => (StatusClearing)status_clearing; 
+            set => status_clearing = Convert.ToDecimal(value); 
+        }
 
         public bool ToolCreated = false;
         public bool isSubscribedToolOrderBook = false;
@@ -182,14 +278,25 @@ namespace TradingRobotsServer.Models.QuikConnector
 
                         if (classCode == "SPBFUT")
                         {
-                            Console.WriteLine("Получаем 'guaranteeProviding'.");
                             lot = 1;
                             guaranteeProvidingbuy = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.BUYDEPO).Result.ParamValue.Replace('.', separator));
                             guaranteeProvidingsell = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.SELLDEPO).Result.ParamValue.Replace('.', separator));
+
+                            price_max = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.PRICEMAX).Result.ParamValue.Replace('.', separator));
+                            price_min = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.PRICEMIN).Result.ParamValue.Replace('.', separator));
+
+                            start_morning_session = Convert.ToDateTime(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.MONSTARTTIME).Result.ParamImage.Replace('.', separator));
+                            end_morning_session = Convert.ToDateTime(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.MONSTARTTIME).Result.ParamImage.Replace('.', separator));
+                            start_main_session = Convert.ToDateTime(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.STARTTIME).Result.ParamImage.Replace('.', separator));
+                            end_main_session = Convert.ToDateTime(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.ENDTIME).Result.ParamImage.Replace('.', separator));
+                            start_evening_session = Convert.ToDateTime(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.EVNSTARTTIME).Result.ParamImage.Replace('.', separator));
+                            end_evening_session = Convert.ToDateTime(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.EVNENDTIME).Result.ParamImage.Replace('.', separator));
+
+                            maturity_time = Convert.ToDateTime(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.MAT_DATE).Result.ParamImage.Replace('.', separator));
+                            status_clearing = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.CLSTATE).Result.ParamValue.Replace('.', separator));
                         }
                         else
                         {
-                            Console.WriteLine("Получаем 'lot'.");
                             lot = Convert.ToInt32(Convert.ToDouble(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.LOTSIZE).Result.ParamValue.Replace('.', separator)));
                             guaranteeProvidingbuy = 0;
                             guaranteeProvidingsell = 0;
@@ -229,6 +336,18 @@ namespace TradingRobotsServer.Models.QuikConnector
             }
         }
 
+        public void UpdateParam()
+        {
+            guaranteeProvidingbuy = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.BUYDEPO).Result.ParamValue.Replace('.', separator));
+            guaranteeProvidingsell = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.SELLDEPO).Result.ParamValue.Replace('.', separator));
+
+            price_max = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.PRICEMAX).Result.ParamValue.Replace('.', separator));
+            price_min = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.PRICEMIN).Result.ParamValue.Replace('.', separator));
+
+            maturity_time = Convert.ToDateTime(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.MAT_DATE).Result.ParamValue.Replace('.', separator));
+            status_clearing = Convert.ToInt32(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.CLSTATE).Result.ParamValue.Replace('.', separator));
+        }
+
         public decimal CallLastPrice()
         {
             lastPrice = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.LAST).Result.ParamValue.Replace('.', separator));
@@ -265,9 +384,9 @@ namespace TradingRobotsServer.Models.QuikConnector
             }
         }
 
-        public void GetHistoricalCandlesAsync(int count)
+        public async void GetHistoricalCandlesAsync(int count)
         {
-            List<QuikSharp.DataStructures.Candle> temp_candles = quik.Candles.GetLastCandles(classCode, securityCode, interval, count).Result;
+            List<QuikSharp.DataStructures.Candle> temp_candles = await quik.Candles.GetLastCandles(classCode, securityCode, interval, count);
             foreach (var candle in temp_candles)
             {
                 Candle temp_candle = new Candle(candle);

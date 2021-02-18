@@ -23,14 +23,6 @@ namespace TradingRobotsServer.Models.Logic.Base
         public abstract void AnalysisTick(Tick tick);
 
         /// <summary>
-        /// Отправка ордеров.
-        /// </summary>
-        /// <param name="last_extremum"></param>
-        /// <param name="price"></param>
-        /// <param name="operation"></param>
-        public abstract void PlacingOrders((Candle, Extremum) last_extremum, decimal price, Operation operation, DateTime dateTime);
-
-        /// <summary>
         /// Отправка стоп-лимитов.
         /// </summary>
         /// <param name="deal"></param>

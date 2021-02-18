@@ -26,13 +26,11 @@ namespace TradingRobotsServer.Models.Support
                 return count_lots_to_trade;
         }
 
-        public static int CalculationCountLotsToTradeFutures(QuikConnect quik_connect, Tool tool, Deal deal, decimal stoploss, decimal risk_percent, int lot_size)
+        public static int CalculationCountLotsToTradeFutures(QuikConnect quik_connect, Tool tool, Deal deal, decimal price, decimal stoploss, decimal risk_percent, int lot_size, int limiter_in_parts)
         {
-            decimal Deposit = quik_connect.GetFuturesDepoClearLimit(tool.FirmID, tool.AccountID, 0, "SUR") / 3;
+            decimal Deposit = (quik_connect.GetFuturesDepoClearLimit(tool.FirmID, tool.AccountID, 0, "SUR")) / limiter_in_parts;
 
-            decimal trend_entry_price = deal.TradeEntryPoint.YPoint; //цена входа
-
-            decimal risk_price = Math.Abs(trend_entry_price - stoploss); //величина риска
+            decimal risk_price = Math.Abs(price - stoploss); //величина риска
 
             int amount_vol = (int)Math.Floor((Deposit / 100 * risk_percent) / risk_price); //
             int count_lots = (int)Math.Floor((decimal)amount_vol / lot_size) * lot_size; //количество лотов
