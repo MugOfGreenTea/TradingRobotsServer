@@ -156,13 +156,17 @@ namespace TradingRobotsServer.Models.QuikConnector
                     }
                     return null;
                 }
+                else
+                {
+                    Logs.DebugLog("Ошибка получения данных по инструменту.", LogType.Error);
+                    return null;
+                }
             }
             catch
             {
                 Logs.DebugLog("Ошибка получения данных по инструменту.", LogType.Error);
                 return null;
             }
-            return null;
         }
 
         #endregion
@@ -778,8 +782,15 @@ namespace TradingRobotsServer.Models.QuikConnector
             {
                 List<Order> Orders = GetOrdersTable();
                 int index_order = Orders.FindIndex(o => o.OrderNum == id_order);
-                await quik.Orders.KillOrder(Orders[index_order]);
-                Logs.DebugLog("Заявка №" + Orders[index_order].OrderNum + " снята.", LogType.Info);
+                if (index_order > 0)
+                {
+                    await quik.Orders.KillOrder(Orders[index_order]);
+                    Logs.DebugLog("Заявка №" + Orders[index_order].OrderNum + " снята.", LogType.Info);
+                }
+                else
+                {
+                    Logs.DebugLog("Ошибка снятия заявки № " + id_order + ".", LogType.Error);
+                }
             }
             catch
             {
@@ -798,8 +809,15 @@ namespace TradingRobotsServer.Models.QuikConnector
             {
                 List<StopOrder> StopOrders = GetStopOrdersTable();
                 int index_order = StopOrders.FindIndex(o => o.OrderNum == id_order);
-                await quik.StopOrders.KillStopOrder(StopOrders[index_order]);
-                Logs.DebugLog("Заявка №" + StopOrders[index_order].OrderNum + " снята.", LogType.Info);
+                if (index_order > 0)
+                {
+                    await quik.StopOrders.KillStopOrder(StopOrders[index_order]);
+                    Logs.DebugLog("Заявка №" + StopOrders[index_order].OrderNum + " снята.", LogType.Info);
+                }
+                else
+                {
+                    Logs.DebugLog("Ошибка снятия заявки № " + id_order + ".", LogType.Error);
+                }
             }
             catch
             {

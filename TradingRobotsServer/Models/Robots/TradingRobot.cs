@@ -20,6 +20,8 @@ namespace TradingRobotsServer.Models
         public Timer TimerConnectQuik;
         public Thread ThreadWaitingForConnection;
         public Timer TimerWaitingForConnection;
+        public Thread ThreadWaitingForTool;
+        public Timer TimerWaitingForTool;
         public Strategy Strategy;
 
         private string ToolName;
@@ -36,11 +38,15 @@ namespace TradingRobotsServer.Models
         bool check_subscribe_depo_limit; //проверка подписки на изменение лимита по бумагам
         bool check_subscribe_stoplimit; //проверка подписки на получение изменений позиции в стоп-заявках
         bool check_subscribe_trade;//проверка подписки на получение информации о новой сделке
-
+        bool check_waiting_for_connection = false;
+        bool check_waiting_for_tool = false;
         #endregion
 
         public void Run(int port, string host, string tool_name, CandleInterval candle_interval, string param)
         {
+            ToolName = tool_name;
+            Interval = candle_interval;
+            Param = param;
             InitialQuik();
             ConnectQuik(port, host);
             if (check_quik_connecting)
@@ -50,9 +56,6 @@ namespace TradingRobotsServer.Models
             }
             else
             {
-                ToolName = tool_name;
-                Interval = candle_interval;
-                Param = param;
                 WaitingForConnecting();
             }
         }
@@ -74,6 +77,7 @@ namespace TradingRobotsServer.Models
         {
             ThreadWaitingForConnection = new Thread(new ThreadStart(StartTimerWaitingForConnection));
             ThreadWaitingForConnection.Start();
+            check_waiting_for_connection = true;
         }
 
         private void StartTimerQuikConnect()
@@ -87,9 +91,9 @@ namespace TradingRobotsServer.Models
         private void CallQuikConnect(object sender, EventArgs e)
         {
             check_quik_connecting = quik_connect.CallQuikConnecting();
-            if (!check_quik_connecting)
+            if (!check_quik_connecting && !check_waiting_for_connection)
                 WaitingForConnecting();
-            Debug.WriteLine("Соединение с сервером установленно.");
+            //Debug.WriteLine("Соединение с сервером установленно.");
         }
 
         private void StartTimerWaitingForConnection()
@@ -110,6 +114,7 @@ namespace TradingRobotsServer.Models
                 ThreadWaitingForConnection.Abort();
                 TimerWaitingForConnection = null;
                 ThreadWaitingForConnection = null;
+                check_waiting_for_connection = false;
             }
             Debug.WriteLine("Ожидание подключения к серверу.");
         }

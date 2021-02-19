@@ -215,7 +215,7 @@ namespace TradingRobotsServer.Models.Logic
                 temp_id_order = order.OrderNum;
                 //await Task.Delay(20);
                 bool check = Strategy.ProcessingExecutedOrders(order);
-                if (check)
+                if (!check)
                     PoolOrders.Add(new OrderInPool(order));
             }
         }
@@ -232,7 +232,7 @@ namespace TradingRobotsServer.Models.Logic
                 temp_id_stoporder = stoporder.OrderNum;
                 //await Task.Delay(20);
                 bool check = Strategy.ProcessingExecutedStopOrders(stoporder);
-                if (check)
+                if (!check)
                     PoolOrders.Add(new OrderInPool(stoporder));
             }
         }
@@ -244,12 +244,12 @@ namespace TradingRobotsServer.Models.Logic
                 if (PoolOrders[i].Order is Order)
                 {
                     bool check_execution = Strategy.ProcessingExecutedOrders((Order)PoolOrders[i].Order);
-                    PoolOrders[i].Distribution = !check_execution;
+                    PoolOrders[i].Distribution = check_execution;
                 }
                 if (PoolOrders[i].Order is StopOrder)
                 {
                     bool check_execution = Strategy.ProcessingExecutedStopOrders((StopOrder)PoolOrders[i].Order);
-                    PoolOrders[i].Distribution = !check_execution;
+                    PoolOrders[i].Distribution = check_execution;
                 }
             }
             ClearPoolOrders();
@@ -259,7 +259,7 @@ namespace TradingRobotsServer.Models.Logic
         {
             for (int i = 0; i < PoolOrders.Count; i++)
             {
-                if (!PoolOrders[i].Distribution)
+                if (PoolOrders[i].Distribution)
                 {
                     PoolOrders.RemoveAt(i);
                     i--;
@@ -348,8 +348,12 @@ namespace TradingRobotsServer.Models.Logic
                         }
                         break;
                     case TypeOrder.MarketOrder:
+                        if (deal.OrdersInfo[i].Vol == -1)
+                            deal.OrdersInfo[i].Vol = ManagementOfRisks.CalculationCountLotsToTradeFutures(QuikConnecting, Tool, deal, deal.OrdersInfo[i].Price, deal.StopLoss, 1, Tool.Lot, 3);
+
                         temp_order = await QuikConnecting.quik.Orders.SendMarketOrder(Tool.ClassCode, Tool.SecurityCode, Tool.AccountID,
-                            deal.Operation, 3 /*deal.OrdersInfo[i].Vol*/);
+                            deal.Operation, deal.OrdersInfo[i].Vol);
+                       
                         if (temp_order.OrderNum > 0)
                         {
                             deal.OrdersInfo[i].IDOrder = temp_order.OrderNum;
