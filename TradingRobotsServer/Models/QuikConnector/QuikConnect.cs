@@ -548,13 +548,13 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// <param name="price"></param>
         /// <param name="vol"></param>
         /// <returns></returns>
-        public async Task<Order> LimitOrder(Tool Tool, Operation operation, decimal price, int vol)
+        public async Task<Order> LimitOrder(Tool Tool, Operation operation, decimal price, int vol, string comment)
         {
             try
             {
                 price = Math.Round(price, Tool.PriceAccuracy);
                 Logs.DebugLog("Выставляем заявку на покупку, по цене:" + price + " ...", LogType.Info);
-                long transactionID = (await quik.Orders.SendLimitOrder(Tool.ClassCode, Tool.SecurityCode, Tool.AccountID, operation, price, vol).ConfigureAwait(false)).TransID;
+                long transactionID = (await quik.Orders.SendLimitOrder(Tool.ClassCode, Tool.SecurityCode, Tool.AccountID, operation, price, vol, comment).ConfigureAwait(false)).TransID;
                 if (transactionID > 0)
                 {
                     Logs.DebugLog("Заявка выставлена. ID транзакции - " + transactionID, LogType.Info);
@@ -598,13 +598,13 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// <param name="operation"></param>
         /// <param name="vol"></param>
         /// <returns></returns>
-        public async Task<Order> MarketOrder(Tool Tool, Operation operation, int vol)
+        public async Task<Order> MarketOrder(Tool Tool, Operation operation, int vol, string comment)
         {
             try
             {
                 //decimal priceInOrder = Math.Round(Tool.LastPrice + Tool.Step * 5, Tool.PriceAccuracy);
                 Logs.DebugLog("Выставляем рыночную заявку на покупку...", LogType.Info);
-                long transactionID = (await quik.Orders.SendMarketOrder(Tool.ClassCode, Tool.SecurityCode, Tool.AccountID, operation, vol).ConfigureAwait(false)).TransID;
+                long transactionID = (await quik.Orders.SendMarketOrder(Tool.ClassCode, Tool.SecurityCode, Tool.AccountID, operation, vol, comment).ConfigureAwait(false)).TransID;
                 if (transactionID > 0)
                 {
                     Logs.DebugLog("Заявка выставлена. ID транзакции - " + transactionID, LogType.Info);
@@ -657,7 +657,7 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// <param name="spread_unit"></param>
         /// <returns></returns>
         public async Task<StopOrder> TakeProfitStotLimitOrder(Tool Tool, decimal offset, decimal spread,
-            decimal takeprofit, decimal stoplimit, decimal price, Operation operation, int vol,
+            decimal takeprofit, decimal stoplimit, decimal price, Operation operation, int vol, string comment,
             OffsetUnits offset_units = OffsetUnits.PRICE_UNITS, OffsetUnits spread_unit = OffsetUnits.PRICE_UNITS)
         {
             StopOrder order = new StopOrder()
@@ -675,7 +675,8 @@ namespace TradingRobotsServer.Models.QuikConnector
                 ConditionPrice2 = Math.Round(stoplimit, Tool.PriceAccuracy),
                 Price = Math.Round(price, Tool.PriceAccuracy),
                 Operation = operation,
-                Quantity = vol
+                Quantity = vol,
+                Comment = comment
             };
 
             if (operation == Operation.Buy)
@@ -700,7 +701,7 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// <param name="spread_unit"></param>
         /// <returns></returns>
         public async Task<StopOrder> TakeProfitOrder(Tool Tool, decimal offset, decimal spread,
-            decimal takeprofit, decimal price, Operation operation, int vol,
+            decimal takeprofit, decimal price, Operation operation, int vol, string comment,
             OffsetUnits offset_units = OffsetUnits.PRICE_UNITS, OffsetUnits spread_unit = OffsetUnits.PRICE_UNITS)
         {
             StopOrder order = new StopOrder()
@@ -717,7 +718,8 @@ namespace TradingRobotsServer.Models.QuikConnector
                 ConditionPrice = Math.Round(takeprofit, Tool.PriceAccuracy),
                 Price = Math.Round(price, Tool.PriceAccuracy),
                 Operation = operation,
-                Quantity = vol
+                Quantity = vol,
+                Comment = comment
             };
 
             if (operation == Operation.Sell)
@@ -742,7 +744,7 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// <param name="spread_unit"></param>
         /// <returns></returns>
         public async Task<StopOrder> StopLimitOrder(Tool Tool, decimal offset, decimal spread,
-            decimal stoploss, decimal price, Operation operation, int vol,
+            decimal stoploss, decimal price, Operation operation, int vol, string comment,
             OffsetUnits offset_units = OffsetUnits.PRICE_UNITS, OffsetUnits spread_unit = OffsetUnits.PRICE_UNITS)
         {
             StopOrder order = new StopOrder()
@@ -759,7 +761,8 @@ namespace TradingRobotsServer.Models.QuikConnector
                 ConditionPrice = Math.Round(stoploss, Tool.PriceAccuracy),
                 Price = Math.Round(price, Tool.PriceAccuracy),
                 Operation = operation,
-                Quantity = vol
+                Quantity = vol,
+                Comment = comment
             };
 
             if (operation == Operation.Sell)

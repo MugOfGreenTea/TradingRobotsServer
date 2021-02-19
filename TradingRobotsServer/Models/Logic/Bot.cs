@@ -47,7 +47,7 @@ namespace TradingRobotsServer.Models.Logic
         public void SubsribeNewCandleToolAsync()
         {
             Tool.NewCandle += NewCandle;
-            Tool.GetHistoricalCandlesAsync(10);
+            //Tool.GetHistoricalCandlesAsync(10);
             DebugLog("Bot: Подписка на новые свечки от Tool завершена.");
         }
 
@@ -216,7 +216,10 @@ namespace TradingRobotsServer.Models.Logic
                 //await Task.Delay(20);
                 bool check = Strategy.ProcessingExecutedOrders(order);
                 if (!check)
+                {
                     PoolOrders.Add(new OrderInPool(order));
+                Debug.WriteLine("OnOrder попал в Pool");
+                }
             }
         }
 
@@ -233,7 +236,10 @@ namespace TradingRobotsServer.Models.Logic
                 //await Task.Delay(20);
                 bool check = Strategy.ProcessingExecutedStopOrders(stoporder);
                 if (!check)
+                {
                     PoolOrders.Add(new OrderInPool(stoporder));
+                    Debug.WriteLine("OnOrder попал в Pool");
+                }
             }
         }
 
@@ -244,12 +250,14 @@ namespace TradingRobotsServer.Models.Logic
                 if (PoolOrders[i].Order is Order)
                 {
                     bool check_execution = Strategy.ProcessingExecutedOrders((Order)PoolOrders[i].Order);
-                    PoolOrders[i].Distribution = check_execution;
+                    if (check_execution)
+                        PoolOrders[i].Distribution = !check_execution;
                 }
                 if (PoolOrders[i].Order is StopOrder)
                 {
                     bool check_execution = Strategy.ProcessingExecutedStopOrders((StopOrder)PoolOrders[i].Order);
-                    PoolOrders[i].Distribution = check_execution;
+                    if (check_execution)
+                        PoolOrders[i].Distribution = !check_execution;
                 }
             }
             ClearPoolOrders();
@@ -323,93 +331,28 @@ namespace TradingRobotsServer.Models.Logic
                 if (deal.OrdersInfo[i].IssueStatus == State.Completed || deal.OrdersInfo[i].IssueStatus == State.Canceled)
                     continue;
 
-                Order temp_order;
                 StopOrder temp_stoporder;
-                switch (deal.OrdersInfo[i].TypeOrder)
+                if (deal.OrdersInfo[i].Vol == -1)
+                    deal.OrdersInfo[i].Vol = ManagementOfRisks.CalculationCountLotsToTradeFutures(QuikConnecting, Tool, deal, deal.OrdersInfo[i].Price, deal.StopLoss, 1, Tool.Lot, 3);
+
+                temp_stoporder = await QuikConnecting.StopLimitOrder(Tool, 0m, 0m, deal.OrdersInfo[i].Price, deal.OrdersInfo[i].Price3, deal.OrdersInfo[i].Operation, deal.OrdersInfo[i].Vol, "n" + deal.ID + "/Open");
+
+                if (temp_stoporder.TransId > 0)
                 {
-                    case TypeOrder.Null:
-                        break;
-                    case TypeOrder.LimitOrder:
-                        if (deal.OrdersInfo[i].Vol == -1)
-                            deal.OrdersInfo[i].Vol = ManagementOfRisks.CalculationCountLotsToTradeFutures(QuikConnecting, Tool, deal, deal.OrdersInfo[i].Price, deal.StopLoss, 1, Tool.Lot, 3);
-
-                        temp_order = await QuikConnecting.quik.Orders.SendLimitOrder(Tool.ClassCode, Tool.SecurityCode, Tool.AccountID,
-                            deal.Operation, Math.Round(deal.OrdersInfo[i].Price, Tool.PriceAccuracy), deal.OrdersInfo[i].Vol);
-
-                        if (temp_order.OrderNum > 0)
-                        {
-                            deal.OrdersInfo[i].IDOrder = temp_order.OrderNum;
-                            deal.OrdersInfo[i].IssueStatus = State.Completed;
-                            NewDeal?.Invoke(deal, Command.SendOrder);
-                        }
-                        else
-                        {
-                            //впилить защиту от не открытой сделки
-                        }
-                        break;
-                    case TypeOrder.MarketOrder:
-                        if (deal.OrdersInfo[i].Vol == -1)
-                            deal.OrdersInfo[i].Vol = ManagementOfRisks.CalculationCountLotsToTradeFutures(QuikConnecting, Tool, deal, deal.OrdersInfo[i].Price, deal.StopLoss, 1, Tool.Lot, 3);
-
-                        temp_order = await QuikConnecting.quik.Orders.SendMarketOrder(Tool.ClassCode, Tool.SecurityCode, Tool.AccountID,
-                            deal.Operation, deal.OrdersInfo[i].Vol);
-                       
-                        if (temp_order.OrderNum > 0)
-                        {
-                            deal.OrdersInfo[i].IDOrder = temp_order.OrderNum;
-                            deal.OrdersInfo[i].IssueStatus = State.Completed;
-                            deal.Status = StatusDeal.Open;
-                            NewDeal?.Invoke(deal, Command.SendOrder);
-                        }
-                        else
-                        {
-                            //впилить защиту от не открытой сделки
-                        }
-                        break;
-                    case TypeOrder.TakeProfit:
-                        if (deal.OrdersInfo[i].Vol == -1)
-                            deal.OrdersInfo[i].Vol = ManagementOfRisks.CalculationCountLotsToTradeFutures(QuikConnecting, Tool, deal, deal.OrdersInfo[i].Price, deal.StopLoss, 1, Tool.Lot, 3);
-
-                        temp_stoporder = await QuikConnecting.TakeProfitOrder(Tool, 0, 0, deal.OrdersInfo[i].Price, deal.OrdersInfo[i].Price,
-                            deal.OrdersInfo[i].Operation, deal.OrdersInfo[i].Vol);
-
-                        if (temp_stoporder.TransId > 0)
-                        {
-                            deal.OrdersInfo[i].IDOrder = temp_stoporder.OrderNum;
-                            deal.OrdersInfo[i].IssueStatus = State.Completed;
-                            NewDeal?.Invoke(deal, Command.SendOrder);
-                        }
-                        else
-                        {
-                            //впилить защиту от не открытой сделки
-                        }
-                        break;
-                    case TypeOrder.StopLimit:
-                        if (deal.OrdersInfo[i].Vol == -1)
-                            deal.OrdersInfo[i].Vol = ManagementOfRisks.CalculationCountLotsToTradeFutures(QuikConnecting, Tool, deal, deal.OrdersInfo[i].Price, deal.StopLoss, 1, Tool.Lot, 3);
-
-                        temp_stoporder = await QuikConnecting.StopLimitOrder(Tool, 0m, 0m, deal.OrdersInfo[i].Price, deal.OrdersInfo[i].Price, deal.OrdersInfo[i].Operation, deal.OrdersInfo[i].Vol);
-
-                        if (temp_stoporder.TransId > 0)
-                        {
-                            deal.OrdersInfo[i].IDOrder = temp_stoporder.OrderNum;
-                            deal.OrdersInfo[i].IssueStatus = State.Completed;
-                            NewDeal?.Invoke(deal, Command.SendOrder);
-                        }
-                        else
-                        {
-                            //впилить защиту от не открытой сделки
-                        }
-                        break;
-                    default:
-                        break;
+                    deal.OrdersInfo[i].IDOrder = temp_stoporder.OrderNum;
+                    deal.OrdersInfo[i].IssueStatus = State.Completed;
+                    NewDeal?.Invoke(deal, Command.SendOrder);
+                }
+                else
+                {
+                    //впилить защиту от не открытой сделки
                 }
             }
         }
 
         private async Task SendStopLimitOrdersAsync(Deal deal)
         {
-            if (deal.Status != StatusDeal.Open)
+            if (deal.Status == StatusDeal.Closed)
                 return;
 
             for (int i = 0; i < deal.StopLimitOrdersInfo.Count; i++)
@@ -417,34 +360,27 @@ namespace TradingRobotsServer.Models.Logic
                 if (deal.StopLimitOrdersInfo[i].IssueStatus == State.Completed || deal.StopLimitOrdersInfo[i].IssueStatus == State.Canceled)
                     continue;
                 StopOrder temp_stoporder;
-                switch (deal.StopLimitOrdersInfo[i].TypeOrder)
-                {
-                    case TypeOrder.Null:
-                        break;
-                    case TypeOrder.StopLimit:
-                        deal.StopLimitOrdersInfo[i].Vol = deal.Vol;
-                        temp_stoporder = await QuikConnecting.StopLimitOrder(Tool, 0m, 0m, deal.StopLimitOrdersInfo[i].Price, deal.StopLimitOrdersInfo[i].Price, deal.StopLimitOrdersInfo[i].Operation, deal.StopLimitOrdersInfo[i].Vol);
+                deal.StopLimitOrdersInfo[i].Vol = deal.Vol;
+                temp_stoporder = await QuikConnecting.StopLimitOrder(Tool, 0m, 0m, deal.StopLimitOrdersInfo[i].Price, deal.StopLimitOrdersInfo[i].Price, 
+                    deal.StopLimitOrdersInfo[i].Operation, deal.StopLimitOrdersInfo[i].Vol, "n" + deal.ID + "/StopLoss" + i);
 
-                        if (temp_stoporder.TransId > 0)
-                        {
-                            deal.StopLimitOrdersInfo[i].IDOrder = temp_stoporder.OrderNum;
-                            deal.StopLimitOrdersInfo[i].IssueStatus = State.Completed;
-                            NewDeal?.Invoke(deal, Command.SendStopLimitOrder);
-                        }
-                        else
-                        {
-                            //впилить защиту от не открытой сделки
-                        }
-                        break;
-                    default:
-                        break;
+                if (temp_stoporder.TransId > 0)
+                {
+                    deal.StopLimitOrdersInfo[i].IDOrder = temp_stoporder.OrderNum;
+                    deal.StopLimitOrdersInfo[i].IssueStatus = State.Completed;
+                    deal.StopLimitOrdersInfo[i].ExecutionStatus = State.Active; 
+                    NewDeal?.Invoke(deal, Command.SendStopLimitOrder);
+                }
+                else
+                {
+                    //впилить защиту от не открытой сделки
                 }
             }
         }
 
         private async Task SendTakeProfitOrdersAsync(Deal deal)
         {
-            if (deal.Status != StatusDeal.Open)
+            if (deal.Status == StatusDeal.Closed)
                 return;
 
             for (int i = 0; i < deal.TakeProfitOrdersInfo.Count; i++)
@@ -452,29 +388,21 @@ namespace TradingRobotsServer.Models.Logic
                 if (deal.TakeProfitOrdersInfo[i].IssueStatus == State.Completed || deal.TakeProfitOrdersInfo[i].IssueStatus == State.Canceled)
                     continue;
                 StopOrder temp_stoporder;
-                switch (deal.TakeProfitOrdersInfo[i].TypeOrder)
-                {
-                    case TypeOrder.Null:
-                        break;
-                    case TypeOrder.TakeProfit:
-                        if (deal.TakeProfitOrdersInfo[i].Vol == -1)
-                            deal.TakeProfitOrdersInfo[i].Vol = ManagementOfRisks.CalculationCountPartSale(deal, 3, Tool.Lot);
-                        temp_stoporder = await QuikConnecting.TakeProfitOrder(Tool, 0, 0, deal.TakeProfitOrdersInfo[i].Price, deal.TakeProfitOrdersInfo[i].Price,
-                            deal.TakeProfitOrdersInfo[i].Operation, deal.TakeProfitOrdersInfo[i].Vol);
+                if (deal.TakeProfitOrdersInfo[i].Vol == -1)
+                    deal.TakeProfitOrdersInfo[i].Vol = ManagementOfRisks.CalculationCountPartSale(deal, 3, Tool.Lot);
+                temp_stoporder = await QuikConnecting.TakeProfitOrder(Tool, 0, 0, deal.TakeProfitOrdersInfo[i].Price, deal.TakeProfitOrdersInfo[i].Price,
+                    deal.TakeProfitOrdersInfo[i].Operation, deal.TakeProfitOrdersInfo[i].Vol, "n" + deal.ID + "/TakeProfit" + i);
 
-                        if (temp_stoporder.TransId > 0)
-                        {
-                            deal.TakeProfitOrdersInfo[i].IDOrder = temp_stoporder.OrderNum;
-                            deal.TakeProfitOrdersInfo[i].IssueStatus = State.Completed;
-                            NewDeal?.Invoke(deal, Command.SendTakeProfitOrder);
-                        }
-                        else
-                        {
-                            //впилить защиту от не открытой сделки
-                        }
-                        break;
-                    default:
-                        break;
+                if (temp_stoporder.TransId > 0)
+                {
+                    deal.TakeProfitOrdersInfo[i].IDOrder = temp_stoporder.OrderNum;
+                    deal.TakeProfitOrdersInfo[i].IssueStatus = State.Completed;
+                    deal.TakeProfitOrdersInfo[i].ExecutionStatus = State.Active;
+                    NewDeal?.Invoke(deal, Command.SendTakeProfitOrder);
+                }
+                else
+                {
+                    //впилить защиту от не открытой сделки
                 }
             }
         }
@@ -495,7 +423,7 @@ namespace TradingRobotsServer.Models.Logic
                         break;
                     case TypeOrder.TakeProfitAndStopLimit:
                         temp_stoporder = await QuikConnecting.TakeProfitStotLimitOrder(Tool, 0, 0, deal.TakeProfitAndStopLimitOrdersInfo[i].Price, deal.TakeProfitAndStopLimitOrdersInfo[i].Price2,
-                            deal.TakeProfitAndStopLimitOrdersInfo[i].Price3, deal.TakeProfitAndStopLimitOrdersInfo[i].Operation, deal.TakeProfitAndStopLimitOrdersInfo[i].Vol);
+                            deal.TakeProfitAndStopLimitOrdersInfo[i].Price3, deal.TakeProfitAndStopLimitOrdersInfo[i].Operation, deal.TakeProfitAndStopLimitOrdersInfo[i].Vol, "n" + deal.ID + "/TPandSL" + i);
 
                         if (temp_stoporder.TransId > 0)
                         {
@@ -583,5 +511,22 @@ namespace TradingRobotsServer.Models.Logic
             Order = order;
             Distribution = false;
         }
+    }
+
+    public class AccountInfo 
+    {
+        private decimal deposit;
+        public decimal Deposite
+        {
+            get
+            {
+               return deposit; 
+            }
+            set => deposit = value;
+        }
+
+        private int position;
+
+        private decimal limit_clear_position;
     }
 }

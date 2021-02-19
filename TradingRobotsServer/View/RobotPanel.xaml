@@ -6,15 +6,11 @@
         xmlns:local="clr-namespace:TradingRobotsServer"
         xmlns:vm="clr-namespace:TradingRobotsServer.ViewModels"
         mc:Ignorable="d"
-        Title="Profit Taker 3000" Height="786.525" Width="1571.502">
+        Title="Profit Taker 3000" Height="410.525" Width="241.502">
     <Window.DataContext>
         <vm:RobotPanelViewModel/>
     </Window.DataContext>
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="151*"/>
-            <ColumnDefinition Width="624*"/>
-        </Grid.ColumnDefinitions>
+    <Grid HorizontalAlignment="Left" Width="232">
         <Menu Height="23" VerticalAlignment="Top" Grid.ColumnSpan="2">
             <MenuItem Header="File">
                 <MenuItem Header="New Project" ></MenuItem>
@@ -28,19 +24,9 @@
             <MenuItem Header="Edit" ></MenuItem>
             <MenuItem Header="View" ></MenuItem>
         </Menu>
-        <TabControl Margin="10,28,232,10" Grid.Column="1">
-            <TabItem Header="TabItem">
-                <Grid Background="#FFE5E5E5"/>
-            </TabItem>
-            <TabItem Header="TabItem">
-                <Grid Background="#FFE5E5E5"/>
-            </TabItem>
-        </TabControl>
-        <StackPanel Margin="10,28,10,10">
-            <Label Content="Label"/>
-            <TextBox Height="23" TextWrapping="Wrap" Text="{Binding LastPrice, Mode=OneWay}" Margin="0,0,47,0"/>
-            <Button Content="Button" Command="{Binding Button1}"/>
-            <TextBox Height="260" TextWrapping="Wrap" Text="{Binding Log, Mode=OneWay}"/>
+        <StackPanel Margin="10,28,0,10" HorizontalAlignment="Left" Width="210">
+            <Button Content="Button" Command="{Binding Button1}" Height="120"/>
+            <TextBox Height="141" TextWrapping="Wrap" Text="{Binding Log, Mode=OneWay}"/>
         </StackPanel>
 
     </Grid>

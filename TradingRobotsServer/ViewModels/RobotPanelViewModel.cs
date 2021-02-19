@@ -70,7 +70,7 @@ namespace TradingRobotsServer.ViewModels
 
             TradingRobot robotSRH1 = new TradingRobot();
             param = "15;5;2;10,39,0;18,30,0;true;false";
-            robotSRH1.Run(Quik.DefaultPort, Quik.DefaultHost, "SRH1", QuikSharp.DataStructures.CandleInterval.M1, param);
+            robotSRH1.Run(Quik.DefaultPort, Quik.DefaultHost, "SiH1", QuikSharp.DataStructures.CandleInterval.M1, param);
 
             //TradingRobot robotVBH1 = new TradingRobot();
             // param = "15;5;2;10,39,0;18,30,0;true;false";

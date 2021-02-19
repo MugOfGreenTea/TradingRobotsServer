@@ -76,8 +76,10 @@ namespace TradingRobotsServer.Models.QuikConnector
         public decimal GuaranteeProvidingBuy
         {
             get
-            => guaranteeProvidingbuy;
-            set => guaranteeProvidingbuy = value;
+            {
+                guaranteeProvidingbuy = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.BUYDEPO).Result.ParamValue.Replace('.', separator));
+                return guaranteeProvidingbuy;
+            }
         }
 
         private decimal guaranteeProvidingsell;
@@ -87,8 +89,10 @@ namespace TradingRobotsServer.Models.QuikConnector
         public decimal GuaranteeProvidingSell
         {
             get
-            => guaranteeProvidingsell;
-            set => guaranteeProvidingsell = value;
+            {
+                guaranteeProvidingsell = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.BUYDEPO).Result.ParamValue.Replace('.', separator));
+                return guaranteeProvidingsell;
+            }
         }
 
         private decimal price_max;
@@ -97,8 +101,7 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// </summary>
         public decimal PriceMax
         {
-            get
-            => price_max;
+            get => price_max = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.PRICEMAX).Result.ParamValue.Replace('.', separator));
             set => price_max = value;
         }
 
@@ -108,8 +111,7 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// </summary>
         public decimal PriceMin
         {
-            get
-            => price_min;
+            get => price_min = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.PRICEMIN).Result.ParamValue.Replace('.', separator));
             set => price_min = value;
         }
 
@@ -126,8 +128,11 @@ namespace TradingRobotsServer.Models.QuikConnector
         public decimal LastPrice
         {
             get
-            => lastPrice;
-            set => lastPrice = value;
+            {
+                lastPrice = Convert.ToDecimal(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.LAST).Result.ParamValue.Replace('.', separator));
+                NewTick?.Invoke(new Tick(securityCode, classCode, interval, lastPrice));
+                return lastPrice;
+            }
         }
 
         private CandleInterval interval;
@@ -216,10 +221,10 @@ namespace TradingRobotsServer.Models.QuikConnector
         /// <summary>
         /// Статус клиринга.
         /// </summary>
-        public StatusClearing StatusClearing 
-        { 
-            get => (StatusClearing)status_clearing; 
-            set => status_clearing = Convert.ToDecimal(value); 
+        public StatusClearing StatusClearing
+        {
+            get => (StatusClearing)status_clearing;
+            set => status_clearing = Convert.ToDecimal(value);
         }
 
         public bool ToolCreated = false;

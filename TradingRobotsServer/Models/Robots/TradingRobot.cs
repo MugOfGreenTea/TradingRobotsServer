@@ -128,7 +128,6 @@ namespace TradingRobotsServer.Models
 
             if (Tool != null)
             {
-                check_subscribe_orderbook = quik_connect.SubscribeOrderBook(ref Tool);
                 check_subscribe_tool_candles = quik_connect.SubscribeToolReceiveCandles(ref Tool, candle_interval);
 
                 Tool.SubscribeNewCandle();//подписка Tool на новые свечи от QuikConnect
@@ -140,7 +139,7 @@ namespace TradingRobotsServer.Models
             if (check_subscribe_tool_candles && check_subscribe_orderbook)
             {
                 ThreadToolStrategy = new Thread(new ThreadStart(StartTimerCallLastPrice));
-                //ThreadToolStrategy.Start();
+                ThreadToolStrategy.Start();
             }
 
             Strategy = new SetPositionByCandleHighLowStrategy(param, Bot);
@@ -160,7 +159,7 @@ namespace TradingRobotsServer.Models
         private void StartTimerCallLastPrice()
         {
             TimerToolStrategy = new Timer();
-            TimerToolStrategy.Interval = 500;
+            TimerToolStrategy.Interval = 5000;
             TimerToolStrategy.Elapsed += CallLastPrice;
             TimerToolStrategy.Start();
         }
