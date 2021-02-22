@@ -13,6 +13,7 @@ namespace TradingRobotsServer.Models.Structures
         public TrendDataPoint SignalPoint { get; set; }
         public StatusDeal Status { get; set; }
         public Operation Operation { get; set; }
+        public ReasonStop ReasonStop { get; set; }
         public int Vol { get; set; }
         public int PerVol { get; set; }
         public int LastVol { get; set; }
@@ -22,9 +23,7 @@ namespace TradingRobotsServer.Models.Structures
         public List<OrderInfo> TakeProfitOrdersInfo { get; set; }
         public List<OrderInfo> TakeProfitAndStopLimitOrdersInfo { get; set; }
 
-        //public List<Order> Orders { get; set; }
-        //public List<(StopOrder, Order)> StopLimitOrders { get; set; }
-        //public List<(StopOrder, Order)> TakeProfitOrders { get; set; }
+        public List<string> Logs;
 
         public Deal()
         {
@@ -33,9 +32,7 @@ namespace TradingRobotsServer.Models.Structures
             TakeProfitOrdersInfo = new List<OrderInfo>();
             TakeProfitAndStopLimitOrdersInfo = new List<OrderInfo>();
 
-            //Orders = new List<Order>();
-            //StopLimitOrders = new List<(StopOrder, Order)>();
-            //TakeProfitOrders = new List<(StopOrder, Order)>();
+            Logs = new List<string>();
         }
 
         public Deal(TrendDataPoint trade_entry_point, TrendDataPoint signal_point, StatusDeal status, Operation operation, int vol)
@@ -51,10 +48,11 @@ namespace TradingRobotsServer.Models.Structures
             StopLimitOrdersInfo = new List<OrderInfo>();
             TakeProfitOrdersInfo = new List<OrderInfo>();
             TakeProfitAndStopLimitOrdersInfo = new List<OrderInfo>();
+        }
 
-            //Orders = new List<Order>();
-            //StopLimitOrders = new List<(StopOrder, Order)>();
-            //TakeProfitOrders = new List<(StopOrder, Order)>();
+        public void LogDeal(string log_str)
+        {
+            Logs.Add(Logs.Count + ":" + log_str + ";\r\n");
         }
     }
 }

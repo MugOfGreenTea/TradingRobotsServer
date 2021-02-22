@@ -17,6 +17,8 @@ namespace TradingRobotsServer.Models.Logic.Base
         public delegate void OnNewOrder(Deal deal, Command command);
         public abstract event OnNewOrder NewOrder;
 
+        public abstract List<Deal> Deals { get; set; }
+
         public abstract void SubsribeNewDeal();
 
         public abstract void AnalysisCandle(Candle candle);

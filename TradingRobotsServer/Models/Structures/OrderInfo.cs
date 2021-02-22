@@ -28,8 +28,9 @@ namespace TradingRobotsServer.Models.Structures
         public State ExecutionLinkedStatus;
         public long IDOrder;
         public long IDLinkedOrder;//id заявки связаной со стоп-заявкой
+        public string Comment;
 
-        public OrderInfo(TypeOrder type, decimal price, int vol, Operation operation, State issues_status, State execution_status)
+        public OrderInfo(TypeOrder type, decimal price, int vol, Operation operation, State issues_status, State execution_status, string comment)
         {
             TypeOrder = type;
             Price = price;
@@ -37,8 +38,9 @@ namespace TradingRobotsServer.Models.Structures
             Operation = operation;
             IssueStatus = issues_status;
             ExecutionStatus = execution_status;
+            Comment = comment;
         }
-        public OrderInfo(TypeOrder type, decimal price, decimal price3, int vol, Operation operation, State issues_status, State execution_status)
+        public OrderInfo(TypeOrder type, decimal price, decimal price3, int vol, Operation operation, State issues_status, State execution_status, string comment)
         {
             TypeOrder = type;
             Price = price;
@@ -47,8 +49,9 @@ namespace TradingRobotsServer.Models.Structures
             Operation = operation;
             IssueStatus = issues_status;
             ExecutionStatus = execution_status;
+            Comment = comment;
         }
-        public OrderInfo(TypeOrder type, decimal price, decimal price2, decimal price3, int vol, Operation operation, State issues_status, State execution_status)
+        public OrderInfo(TypeOrder type, decimal price, decimal price2, decimal price3, int vol, Operation operation, State issues_status, State execution_status, string comment)
         {
             TypeOrder = type;
             Price = price;
@@ -58,6 +61,7 @@ namespace TradingRobotsServer.Models.Structures
             Operation = operation;
             IssueStatus = issues_status;
             ExecutionStatus = execution_status;
+            Comment = comment;
         }
     }
 }

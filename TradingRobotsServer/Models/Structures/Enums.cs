@@ -104,4 +104,19 @@ namespace TradingRobotsServer.Models.Structures
         /// </summary>
         EveningSessionEnded
     }
+    public enum ReasonStop : byte
+    {
+        Null,
+        BreakingTrend,
+        StopLoss,
+        ShortTarget,
+        AverageTarget,
+        LongTarget,
+        ReverseSignal,
+        PullUpStop,
+        TakeProfit,
+        MACDCloudRevers,
+        EndPeriod,
+        ExcessDistance
+    }
 }

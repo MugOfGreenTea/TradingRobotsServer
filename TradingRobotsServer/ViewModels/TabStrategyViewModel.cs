@@ -155,6 +155,7 @@ namespace TradingRobotsServer.ViewModels
             get => status_connect;
             set
             {
+                status_connect = value;
                 if (value)
                 {
                     BrushesConnect = Brushes.Green;
