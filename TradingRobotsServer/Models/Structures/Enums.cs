@@ -69,7 +69,7 @@ namespace TradingRobotsServer.Models.Structures
         Error,
         Fatal
     }
-    public enum StatusClearing 
+    public enum StatusClearing
     {
         /// <summary>
         /// Не определено
@@ -118,5 +118,15 @@ namespace TradingRobotsServer.Models.Structures
         MACDCloudRevers,
         EndPeriod,
         ExcessDistance
+    }
+    public enum TakeProfitsAndStopLoss : byte
+    {
+        EntryOrder,
+        FirstTakeProfitOrder,
+        FirstStopLossOrder,
+        SecondTakeProfitOrder,
+        SecondStopLossOrder,
+        ThirdTakeProfitOrder,
+        ThirdStopLossOrder
     }
 }

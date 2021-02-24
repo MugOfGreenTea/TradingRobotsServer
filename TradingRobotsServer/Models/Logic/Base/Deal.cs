@@ -18,20 +18,10 @@ namespace TradingRobotsServer.Models.Structures
         public int PerVol { get; set; }
         public int LastVol { get; set; }
 
-        public List<OrderInfo> OrdersInfo { get; set; }
-        public List<OrderInfo> StopLimitOrdersInfo { get; set; }
-        public List<OrderInfo> TakeProfitOrdersInfo { get; set; }
-        public List<OrderInfo> TakeProfitAndStopLimitOrdersInfo { get; set; }
-
         public List<string> Logs;
 
         public Deal()
         {
-            OrdersInfo = new List<OrderInfo>();
-            StopLimitOrdersInfo = new List<OrderInfo>();
-            TakeProfitOrdersInfo = new List<OrderInfo>();
-            TakeProfitAndStopLimitOrdersInfo = new List<OrderInfo>();
-
             Logs = new List<string>();
         }
 
@@ -43,11 +33,6 @@ namespace TradingRobotsServer.Models.Structures
             Operation = operation;
             Vol += vol;
             PerVol += vol;
-
-            OrdersInfo = new List<OrderInfo>();
-            StopLimitOrdersInfo = new List<OrderInfo>();
-            TakeProfitOrdersInfo = new List<OrderInfo>();
-            TakeProfitAndStopLimitOrdersInfo = new List<OrderInfo>();
         }
 
         public void LogDeal(string log_str)

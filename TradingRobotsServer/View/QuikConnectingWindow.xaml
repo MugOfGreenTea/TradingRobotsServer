@@ -5,8 +5,30 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TradingRobotsServer.View"
         mc:Ignorable="d"
-        Title="Подключение к Quik" Height="450" Width="800">
+        Title="Подключение к Quik" Height="439.349" Width="766.272">
     <Grid>
-        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <GridSplitter Grid.Column="1"  Grid.Row="0" ShowsPreview="False" Width="3"
+        HorizontalAlignment="Center" VerticalAlignment="Stretch" />
+        <GridSplitter Grid.Row="1" Grid.ColumnSpan="3" Height="3"
+        HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+        <Canvas Grid.Column="0" Grid.Row="0">
+            <TextBlock>Левая панель</TextBlock>
+        </Canvas>
+        <Canvas Grid.Column="2" Grid.Row="0" Background="LightGreen">
+            <TextBlock>Правая панель</TextBlock>
+        </Canvas>
+        <Canvas Grid.ColumnSpan="3" Grid.Row="2" Background="#dfffff">
+            <TextBlock Canvas.Left="60">Нижняя панель</TextBlock>
+        </Canvas>
     </Grid>
 </Window>

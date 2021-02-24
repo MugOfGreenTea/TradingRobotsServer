@@ -22,7 +22,7 @@ namespace TradingRobotsServer.Models.Logic
         public Tool Tool;
         private Strategy Strategy;
 
-        public delegate void OnNewDeal(Deal deal, Command command);
+        public delegate void OnNewDeal(OrderInfo order);
         public event OnNewDeal NewDeal;
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -184,9 +184,13 @@ namespace TradingRobotsServer.Models.Logic
         /// Обработчик события получение информации о новой сделке.
         /// </summary>
         /// <param name="tick"></param>
-        private void OnTrade(Trade trade)
+        private async void OnTrade(Trade trade)
         {
-
+            if (trade.Account == Tool.AccountID && trade.SecCode == Tool.SecurityCode)
+            {
+                await Task.Delay(20);
+                bool check = Strategy.ProcessingExecutedOrders(trade);
+            }
         }
 
         /// <summary>
@@ -210,10 +214,10 @@ namespace TradingRobotsServer.Models.Logic
         /// <param name="tick"></param>
         private async void OnOrder(Order order)
         {
-            if (order.Account == Tool.AccountID && order.SecCode == Tool.SecurityCode && order.State == State.Completed && order.OrderNum != temp_id_order)
+            Debug.WriteLine("! Comment: " + order.Comment + ", OrderNum: " + order.OrderNum + ", State: " + order.State);
+            if (order.Account == Tool.AccountID && order.SecCode == Tool.SecurityCode && order.State == State.Completed)
             {
-                temp_id_order = order.OrderNum;
-                //await Task.Delay(20);
+                await Task.Delay(20);
                 bool check = Strategy.ProcessingExecutedOrders(order);
                 if (!check)
                 {
@@ -230,19 +234,20 @@ namespace TradingRobotsServer.Models.Logic
         /// <param name="stoporder"></param>
         private async void OnStopOrder(StopOrder stoporder)
         {
-            if (stoporder.OrderNum != temp_id_stoporder && stoporder.Account == Tool.AccountID && stoporder.SecCode == Tool.SecurityCode && stoporder.State == State.Completed && stoporder.LinkedOrder != 0)
+            Debug.WriteLine("! Comment: " + stoporder.Comment + ", OrderNum: " + stoporder.OrderNum + ", LinkedOrder: " + stoporder.LinkedOrder + ", State: " + stoporder.State);
+            if (stoporder.Account == Tool.AccountID && stoporder.SecCode == Tool.SecurityCode && stoporder.State == State.Completed && stoporder.LinkedOrder != 0)
             {
-                temp_id_stoporder = stoporder.OrderNum;
-                //await Task.Delay(20);
+                await Task.Delay(20);
                 bool check = Strategy.ProcessingExecutedStopOrders(stoporder);
                 if (!check)
                 {
                     PoolOrders.Add(new OrderInPool(stoporder));
-                    Debug.WriteLine("OnOrder попал в Pool");
+                    Debug.WriteLine("OnOrder попал в Pool ! Comment: " + stoporder.Comment + ", OrderNum: " + stoporder.OrderNum + ", LinkedOrder: " + stoporder.LinkedOrder + ", State: " + stoporder.State);
                 }
                 if (stoporder.State == State.Completed && stoporder.LinkedOrder == 0)
                     Debug.WriteLine("пришел исполненный стопордер без связанного id");
             }
+
         }
 
         public void DistributionOrders()
@@ -285,34 +290,32 @@ namespace TradingRobotsServer.Models.Logic
         /// Обработчик события нового ордера.
         /// </summary>
         /// <param name="order"></param>
-        public void NewOrder(Deal deal, Command command)
+        public void NewOrder(OrderInfo order)
         {
-            DebugLog("Ордер получен в Bot");
-
-            switch (command)
+            switch (order.Command)
             {
                 case Command.Null:
                     break;
                 case Command.SendOrder:
-                    SendOrdersAsync(deal);
+                    SendOrdersAsync(order);
                     break;
                 case Command.SendStopLimitOrder:
-                    SendStopLimitOrdersAsync(deal);
+                    SendStopLimitOrdersAsync(order);
                     break;
                 case Command.SendTakeProfitOrder:
-                    SendTakeProfitOrdersAsync(deal);
+                    SendTakeProfitOrdersAsync(order);
                     break;
                 case Command.SendTakeProfitAndStopLimitOrder:
-                    SendTakeProfitAndStopLimitOrdersAsync(deal);
+                    SendTakeProfitAndStopLimitOrdersAsync(order);
                     break;
                 case Command.TakeOffOrder:
-                    TakeOffOrderAsync(deal);
+                    TakeOffOrderAsync(order);
                     break;
                 case Command.TakeOffStopLimitOrder:
-                    TakeOffStopLimitOrderAsync(deal);
+                    TakeOffStopLimitOrderAsync(order);
                     break;
                 case Command.TakeOffTakeProfitOrder:
-                    TakeOffTakeProfitOrderAsync(deal);
+                    TakeOffTakeProfitOrderAsync(order);
                     break;
                 default:
                     break;
@@ -326,182 +329,136 @@ namespace TradingRobotsServer.Models.Logic
         /// Выставление ордеров.
         /// </summary>
         /// <param name="deal"></param>
-        private async Task SendOrdersAsync(Deal deal)
+        private async Task SendOrdersAsync(OrderInfo order)
         {
-            for (int i = 0; i < deal.OrdersInfo.Count; i++)
-            {
-                if (deal.OrdersInfo[i].IssueStatus == State.Completed || deal.OrdersInfo[i].IssueStatus == State.Canceled)
-                    continue;
-
-                StopOrder temp_stoporder;
-                if (deal.OrdersInfo[i].Vol == -1)
-                    deal.OrdersInfo[i].Vol = 3;/*ManagementOfRisks.CalculationCountLotsToTradeFutures(QuikConnecting, Tool, deal, deal.OrdersInfo[i].Price, deal.StopLoss, 1, Tool.Lot, 3);*/
-
-                temp_stoporder = await QuikConnecting.StopLimitOrder(Tool, 0m, 0m, deal.OrdersInfo[i].Price, deal.OrdersInfo[i].Price3, deal.OrdersInfo[i].Operation, deal.OrdersInfo[i].Vol, deal.OrdersInfo[i].Comment);
-
-                if (temp_stoporder.TransId > 0)
-                {
-                    deal.OrdersInfo[i].IDOrder = temp_stoporder.OrderNum;
-                    deal.OrdersInfo[i].IssueStatus = State.Completed;
-                    NewDeal?.Invoke(deal, Command.SendOrder);
-                }
-                else
-                {
-                    //впилить защиту от не открытой сделки
-                }
-            }
-        }
-
-        private async Task SendStopLimitOrdersAsync(Deal deal)
-        {
-            if (deal.Status == StatusDeal.Closed)
+            if (order.ExecutionStatus == State.Completed)
                 return;
 
-            for (int i = 0; i < deal.StopLimitOrdersInfo.Count; i++)
-            {
-                if (deal.StopLimitOrdersInfo[i].IssueStatus == State.Completed || deal.StopLimitOrdersInfo[i].IssueStatus == State.Canceled)
-                    continue;
-                StopOrder temp_stoporder;
-                deal.StopLimitOrdersInfo[i].Vol = deal.Vol;
-                temp_stoporder = await QuikConnecting.StopLimitOrder(Tool, 0m, 0m, deal.StopLimitOrdersInfo[i].Price, deal.StopLimitOrdersInfo[i].Price,
-                    deal.StopLimitOrdersInfo[i].Operation, deal.StopLimitOrdersInfo[i].Vol, deal.StopLimitOrdersInfo[i].Comment);
+            StopOrder temp_stoporder;
+            temp_stoporder = await QuikConnecting.StopLimitOrder(Tool, 0m, 0m, order.Price, order.Price3, order.Operation, order.Vol, order.Comment);
 
-                if (temp_stoporder.TransId > 0)
-                {
-                    deal.StopLimitOrdersInfo[i].IDOrder = temp_stoporder.OrderNum;
-                    deal.StopLimitOrdersInfo[i].IssueStatus = State.Completed;
-                    deal.StopLimitOrdersInfo[i].ExecutionStatus = State.Active;
-                    NewDeal?.Invoke(deal, Command.SendStopLimitOrder);
-                }
-                else
-                {
-                    //впилить защиту от не открытой сделки
-                }
+            if (temp_stoporder.TransId > 0)
+            {
+                order.IDOrder = temp_stoporder.OrderNum;
+                order.ExecutionStatus = State.Active;
+                NewDeal?.Invoke(order);
+            }
+            else
+            {
+                //впилить защиту от не открытой сделки
             }
         }
 
-        private async Task SendTakeProfitOrdersAsync(Deal deal)
+        private async Task SendStopLimitOrdersAsync(OrderInfo order)
         {
-            if (deal.Status == StatusDeal.Closed)
+            if (order.ExecutionStatus == State.Completed)
                 return;
 
-            for (int i = 0; i < deal.TakeProfitOrdersInfo.Count; i++)
-            {
-                if (deal.TakeProfitOrdersInfo[i].IssueStatus == State.Completed || deal.TakeProfitOrdersInfo[i].IssueStatus == State.Canceled)
-                    continue;
-                StopOrder temp_stoporder;
-                if (deal.TakeProfitOrdersInfo[i].Vol == -1)
-                    deal.TakeProfitOrdersInfo[i].Vol = ManagementOfRisks.CalculationCountPartSale(deal, 3, Tool.Lot);
-                temp_stoporder = await QuikConnecting.TakeProfitOrder(Tool, 0, 0, deal.TakeProfitOrdersInfo[i].Price, deal.TakeProfitOrdersInfo[i].Price,
-                    deal.TakeProfitOrdersInfo[i].Operation, 1/*deal.TakeProfitOrdersInfo[i].Vol*/, deal.TakeProfitOrdersInfo[i].Comment);
+            StopOrder temp_stoporder;
+            temp_stoporder = await QuikConnecting.StopLimitOrder(Tool, 0m, 0m, order.Price, order.Price, order.Operation, order.Vol, order.Comment);
 
-                if (temp_stoporder.TransId > 0)
-                {
-                    deal.TakeProfitOrdersInfo[i].IDOrder = temp_stoporder.OrderNum;
-                    deal.TakeProfitOrdersInfo[i].IssueStatus = State.Completed;
-                    deal.TakeProfitOrdersInfo[i].ExecutionStatus = State.Active;
-                    NewDeal?.Invoke(deal, Command.SendTakeProfitOrder);
-                }
-                else
-                {
-                    //впилить защиту от не открытой сделки
-                }
+            if (temp_stoporder.TransId > 0)
+            {
+                order.IDOrder = temp_stoporder.OrderNum;
+                order.ExecutionStatus = State.Active;
+                NewDeal?.Invoke(order);
+            }
+            else
+            {
+                //впилить защиту от не открытой сделки
             }
         }
 
-        private async Task SendTakeProfitAndStopLimitOrdersAsync(Deal deal)
+        private async Task SendTakeProfitOrdersAsync(OrderInfo order)
         {
-            if (deal.Status != StatusDeal.Open)
+            if (order.ExecutionStatus == State.Completed)
                 return;
 
-            for (int i = 0; i < deal.TakeProfitAndStopLimitOrdersInfo.Count; i++)
-            {
-                if (deal.TakeProfitAndStopLimitOrdersInfo[i].IssueStatus == State.Completed || deal.TakeProfitAndStopLimitOrdersInfo[i].IssueStatus == State.Canceled)
-                    continue;
-                StopOrder temp_stoporder;
-                switch (deal.TakeProfitAndStopLimitOrdersInfo[i].TypeOrder)
-                {
-                    case TypeOrder.Null:
-                        break;
-                    case TypeOrder.TakeProfitAndStopLimit:
-                        temp_stoporder = await QuikConnecting.TakeProfitStotLimitOrder(Tool, 0, 0, deal.TakeProfitAndStopLimitOrdersInfo[i].Price, deal.TakeProfitAndStopLimitOrdersInfo[i].Price2,
-                            deal.TakeProfitAndStopLimitOrdersInfo[i].Price3, deal.TakeProfitAndStopLimitOrdersInfo[i].Operation, deal.TakeProfitAndStopLimitOrdersInfo[i].Vol, deal.TakeProfitAndStopLimitOrdersInfo[i].Comment);
+            StopOrder temp_stoporder;
+            temp_stoporder = await QuikConnecting.TakeProfitOrder(Tool, 0, 0, order.Price, order.Price, order.Operation, order.Vol, order.Comment);
 
-                        if (temp_stoporder.TransId > 0)
-                        {
-                            deal.TakeProfitAndStopLimitOrdersInfo[i].IDOrder = temp_stoporder.OrderNum;
-                            deal.TakeProfitAndStopLimitOrdersInfo[i].IssueStatus = State.Completed;
-                            NewDeal?.Invoke(deal, Command.SendTakeProfitAndStopLimitOrder);
-                        }
-                        else
-                        {
-                            //впилить защиту от не открытой сделки
-                        }
-                        break;
-                    default:
-                        break;
-                }
+            if (temp_stoporder.TransId > 0)
+            {
+                order.IDOrder = temp_stoporder.OrderNum;
+                order.ExecutionStatus = State.Active;
+                NewDeal?.Invoke(order);
+            }
+            else
+            {
+                //впилить защиту от не открытой сделки
             }
         }
 
-        private async Task TakeOffOrderAsync(Deal deal)
+        private async Task SendTakeProfitAndStopLimitOrdersAsync(OrderInfo order)
         {
-            for (int i = 0; i < deal.OrdersInfo.Count; i++)
+            if (order.ExecutionStatus == State.Completed)
+                return;
+
+            StopOrder temp_stoporder;
+            temp_stoporder = await QuikConnecting.TakeProfitStotLimitOrder(Tool, 0, 0, order.Price, order.Price2,
+                order.Price3, order.Operation, order.Vol, order.Comment);
+
+            if (temp_stoporder.TransId > 0)
             {
-                if (deal.OrdersInfo[i].ExecutionStatus == State.Canceled && (deal.OrdersInfo[i].TypeOrder == TypeOrder.LimitOrder || deal.OrdersInfo[i].TypeOrder == TypeOrder.MarketOrder))
-                {
-                    await QuikConnecting.TakeOffOrder(deal.OrdersInfo[i].IDOrder);
-                    NewDeal?.Invoke(deal, Command.TakeOffOrder);
-                }
-
-                if (deal.OrdersInfo[i].ExecutionStatus == State.Canceled && (deal.OrdersInfo[i].TypeOrder == TypeOrder.TakeProfit || deal.OrdersInfo[i].TypeOrder == TypeOrder.StopLimit))
-                {
-                    await QuikConnecting.TakeOffStopOrder(deal.OrdersInfo[i].IDOrder);
-                    NewDeal?.Invoke(deal, Command.TakeOffOrder);
-                }
-
-                if(deal.OrdersInfo[i].ExecutionStatus == State.Canceled && deal.OrdersInfo[i].IDLinkedOrder > 0 
-                    && (deal.OrdersInfo[i].TypeOrder == TypeOrder.TakeProfit || deal.OrdersInfo[i].TypeOrder == TypeOrder.StopLimit))
-                {
-                    await QuikConnecting.TakeOffOrder(deal.OrdersInfo[i].IDLinkedOrder);
-                    NewDeal?.Invoke(deal, Command.TakeOffOrder);
-                }
+                order.IDOrder = temp_stoporder.OrderNum;
+                order.ExecutionStatus = State.Active;
+                NewDeal?.Invoke(order);
+            }
+            else
+            {
+                //впилить защиту от не открытой сделки
             }
         }
 
-        private async Task TakeOffStopLimitOrderAsync(Deal deal)
+        private async Task TakeOffOrderAsync(OrderInfo order)
         {
-            for (int i = 0; i < deal.StopLimitOrdersInfo.Count; i++)
+            if (order.ExecutionStatus == State.Canceled && (order.TypeOrder == TypeOrder.LimitOrder || order.TypeOrder == TypeOrder.MarketOrder))
             {
-                if (deal.StopLimitOrdersInfo[i].ExecutionStatus == State.Canceled)
-                {
-                    await QuikConnecting.TakeOffStopOrder(deal.StopLimitOrdersInfo[i].IDOrder);
-                    NewDeal?.Invoke(deal, Command.TakeOffStopLimitOrder);
-                }
+                await QuikConnecting.TakeOffOrder(order.IDOrder);
+                NewDeal?.Invoke(order);
+            }
 
-                if (deal.StopLimitOrdersInfo[i].ExecutionStatus == State.Canceled && deal.StopLimitOrdersInfo[i].IDLinkedOrder > 0)
-                {
-                    await QuikConnecting.TakeOffOrder(deal.StopLimitOrdersInfo[i].IDLinkedOrder);
-                    NewDeal?.Invoke(deal, Command.TakeOffStopLimitOrder);
-                }
+            if (order.ExecutionStatus == State.Canceled && (order.TypeOrder == TypeOrder.TakeProfit || order.TypeOrder == TypeOrder.StopLimit))
+            {
+                await QuikConnecting.TakeOffStopOrder(order.IDOrder);
+                NewDeal?.Invoke(order);
+            }
+
+            if (order.ExecutionStatus == State.Canceled && order.IDLinkedOrder > 0
+                && (order.TypeOrder == TypeOrder.TakeProfit || order.TypeOrder == TypeOrder.StopLimit))
+            {
+                await QuikConnecting.TakeOffOrder(order.IDLinkedOrder);
+                NewDeal?.Invoke(order);
             }
         }
 
-        private async Task TakeOffTakeProfitOrderAsync(Deal deal)
+        private async Task TakeOffStopLimitOrderAsync(OrderInfo order)
         {
-            for (int i = 0; i < deal.TakeProfitOrdersInfo.Count; i++)
+            if (order.ExecutionStatus == State.Canceled)
             {
-                if (deal.TakeProfitOrdersInfo[i].ExecutionStatus == State.Canceled)
-                {
-                    await QuikConnecting.TakeOffStopOrder(deal.TakeProfitOrdersInfo[i].IDOrder);
-                    NewDeal?.Invoke(deal, Command.TakeOffTakeProfitOrder);
-                }
+                await QuikConnecting.TakeOffStopOrder(order.IDOrder);
+                NewDeal?.Invoke(order);
+            }
 
-                if (deal.TakeProfitOrdersInfo[i].ExecutionStatus == State.Canceled && deal.TakeProfitOrdersInfo[i].IDLinkedOrder > 0)
-                {
-                    await QuikConnecting.TakeOffOrder(deal.TakeProfitOrdersInfo[i].IDLinkedOrder);
-                    NewDeal?.Invoke(deal, Command.TakeOffTakeProfitOrder);
-                }
+            if (order.ExecutionStatus == State.Canceled && order.IDLinkedOrder > 0)
+            {
+                await QuikConnecting.TakeOffOrder(order.IDLinkedOrder);
+                NewDeal?.Invoke(order);
+            }
+        }
+
+        private async Task TakeOffTakeProfitOrderAsync(OrderInfo order)
+        {
+            if (order.ExecutionStatus == State.Canceled)
+            {
+                await QuikConnecting.TakeOffStopOrder(order.IDOrder);
+                NewDeal?.Invoke(order);
+            }
+
+            if (order.ExecutionStatus == State.Canceled && order.IDLinkedOrder > 0)
+            {
+                await QuikConnecting.TakeOffOrder(order.IDLinkedOrder);
+                NewDeal?.Invoke(order);
             }
         }
 

@@ -38,9 +38,9 @@ namespace TradingRobotsServer.Models.Support
             return CalculationMaxCountVolFutures(tool, Deposit, deal.Operation, count_lots);
         }
 
-        public static int CalculationCountPartSale(Deal deal, int part, int lot_size)
+        public static int CalculationCountPartSale(int vol, int part, int lot_size)
         {
-            return (int)Math.Floor((decimal)(deal.Vol / part) / lot_size) * lot_size;
+            return (int)Math.Floor((decimal)(vol / part) / lot_size) * lot_size;
         }
     }
 }

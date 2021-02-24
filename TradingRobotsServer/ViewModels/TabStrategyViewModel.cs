@@ -1,19 +1,23 @@
 ﻿using LiveCharts;
 using LiveCharts.Wpf;
 using NLog;
+using QuikSharp;
 using QuikSharp.DataStructures;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Media;
+using TestQuotes.Infrastructure.Commands;
 using TestQuotes.ViewModels.Base;
+using TradingRobotsServer.Models;
 
 namespace TradingRobotsServer.ViewModels
 {
-    class TabStrategyViewModel : ViewModel
+    public class TabStrategyViewModel : ViewModel
     {
         #region Информация об инструменте
 
@@ -167,7 +171,7 @@ namespace TradingRobotsServer.ViewModels
             }
         }
 
-        public Brush BrushesConnect;
+        public Brush BrushesConnect { get; set; }
 
         #endregion Информация об инструменте
 
@@ -215,9 +219,97 @@ namespace TradingRobotsServer.ViewModels
 
         #endregion Свойства графика
 
+        #region Свойства робота
+
+        public TradingRobot Robot { get; set; }
+
+        #endregion
+
+        #region Параметры стратегии
+
+        private string window_candle;
+        public string WindowCandle
+        {
+            get => window_candle;
+            set
+            {
+                window_candle = value;
+                OnPropertyChanged("WindowCandle");
+            }
+        }
+
+        private string count_candle;
+        public string CountCandle
+        {
+            get => count_candle;
+            set
+            {
+                count_candle = value;
+                OnPropertyChanged("CountCandle");
+            }
+        }
+
+        private string indent;
+        public string Indent
+        {
+            get => indent;
+            set
+            {
+                indent = value;
+                OnPropertyChanged("Indent");
+            }
+        }
+
+        private string not_trading_time_morning;
+        public string NotTradingTimeMorning
+        {
+            get => not_trading_time_morning;
+            set
+            {
+                not_trading_time_morning = value;
+                OnPropertyChanged("NotTradingTimeMorning");
+            }
+        }
+
+        private string not_trading_time_night;
+        public string NotTradingTimeNight
+        {
+            get => not_trading_time_night;
+            set
+            {
+                not_trading_time_night = value;
+                OnPropertyChanged("NotTradingTimeNight");
+            }
+        }
+
+        private string look_long;
+        public bool LookLong
+        {
+            get => Convert.ToBoolean(look_long);
+            set
+            {
+                look_long = value.ToString();
+                OnPropertyChanged("LookLong");
+            }
+        }
+
+        private string lool_short;
+        public bool LookShort
+        {
+            get => Convert.ToBoolean(lool_short);
+            set
+            {
+                lool_short = value.ToString();
+                OnPropertyChanged("LookShort");
+            }
+        }
+
+        #endregion Параметры стратегии
+
         #region Команды
 
-        public ICommand ConnectQuikAndToolCommand { get; }
+        public ICommand ConnectQuikCommand { get; }
+        public ICommand ConnectToolCommand { get; }
         public ICommand SaveSettingStrategyCommand { get; }
         public ICommand StartBotCommand { get; }
         public ICommand StopBotCommand { get; }
@@ -228,9 +320,81 @@ namespace TradingRobotsServer.ViewModels
 
         public TabStrategyViewModel()
         {
+            ConnectQuikCommand = new RelayCommand(On_ConnectQuikCommand_Execute, Can_ConnectQuikCommand_Execute);
+            ConnectToolCommand = new RelayCommand(On_ConnectToolCommand_Execute, Can_ConnectToolCommand_Execute);
+            SaveSettingStrategyCommand = new RelayCommand(On_SaveSettingStrategyCommand_Execute, Can_SaveSettingStrategyCommand_Execute);
+            StartBotCommand = new RelayCommand(On_StartBotCommand_Execute, Can_StartBotCommand_Execute);
+            StopBotCommand = new RelayCommand(On_StopBotCommand_Execute, Can_StopBotCommand_Execute);
 
+            Debug.WriteLine("check");
+
+            Robot = new TradingRobot();
         }
 
         #endregion Конструктор
+
+        #region Обработчики событий
+
+        private bool Can_ConnectQuikCommand_Execute(object obj)
+        {
+            return true;
+        }
+        private void On_ConnectQuikCommand_Execute(object obj)
+        {
+            Robot.ConnectQuik(Quik.DefaultPort, Quik.DefaultHost);
+        }
+
+        private bool Can_ConnectToolCommand_Execute(object obj)
+        {
+            return true;
+        }
+        private void On_ConnectToolCommand_Execute(object obj)
+        {
+            Robot.ConnectTool(CodeTool, CandleInterval.M1);
+        }
+
+        private bool Can_SaveSettingStrategyCommand_Execute(object obj)
+        {
+            return true;
+        }
+        private void On_SaveSettingStrategyCommand_Execute(object obj)
+        {
+
+        }
+
+        private bool Can_StartBotCommand_Execute(object obj)
+        {
+            return true;
+        }
+        private void On_StartBotCommand_Execute(object obj)
+        {
+            Robot.RunStrategy(GetParamStrategy());
+        }
+
+        private bool Can_StopBotCommand_Execute(object obj)
+        {
+            return true;
+        }
+        private void On_StopBotCommand_Execute(object obj)
+        {
+
+        }
+
+        #endregion Обработчики событий
+
+        #region Саппорт методы
+
+        //сделать нормальный парс времени
+        private string GetParamStrategy()
+        {
+            string param = window_candle + ";" + count_candle + ";" + indent + ";" + 
+                not_trading_time_morning + ";" + not_trading_time_night + ";" + 
+                look_long + ";" + lool_short;
+            param = "15;5;2;10,39,0;18,30,0;true;false";
+
+            return param;
+        }
+
+        #endregion Саппорт методы
     }
 }

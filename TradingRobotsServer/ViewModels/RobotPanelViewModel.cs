@@ -1,9 +1,12 @@
 ﻿using QuikSharp;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 using TestQuotes.Infrastructure.Commands;
 using TestQuotes.ViewModels.Base;
 using TradingRobotsServer.Models;
 using TradingRobotsServer.Models.Structures;
+using TradingRobotsServer.View;
 
 namespace TradingRobotsServer.ViewModels
 {
@@ -11,40 +14,27 @@ namespace TradingRobotsServer.ViewModels
     {
         #region - Переменные
 
-        private decimal last_price;
-        public decimal LastPrice
-        {
-            get => last_price;
-            set
-            {
-                last_price = value;
-                OnPropertyChanged("LastPrice");
-            }
-        }
+        private int IDActivetab { get; set; } = -1;
 
-        private string log;
-        public string Log
-        {
-            get => log;
-            set
-            {
-                log = value;
-                OnPropertyChanged("Log");
-            }
-        }
+        //public ObservableCollection<UserTabControl> Tabs { get; set; }
 
-
+        public TabStrategyViewModel tabStrategyViewModel { get; set; }
 
         #endregion
 
         #region - Команды
 
-        public ICommand Button1 { get; }
+        public ICommand CreateTab { get; }
         public ICommand LogCommand { get; }
         public RobotPanelViewModel()
         {
-            Button1 = new RelayCommand(On_Button_Execute, Can_Button_Execute);
+            CreateTab = new RelayCommand(On_Button_Execute, Can_Button_Execute);
             LogCommand = new RelayCommand(On_LogCommand_Execute, Can_LogCommand_Execute);
+
+            //Tabs = new ObservableCollection<UserTabControl>();
+
+            tabStrategyViewModel = new TabStrategyViewModel();
+
         }
 
         #endregion
@@ -75,7 +65,7 @@ namespace TradingRobotsServer.ViewModels
             {
                 robotSRH1 = new TradingRobot();
                 param = "15;5;2;10,39,0;18,30,0;true;false";
-                robotSRH1.Run(Quik.DefaultPort, Quik.DefaultHost, "SiH1", QuikSharp.DataStructures.CandleInterval.M1, param);
+                robotSRH1.SetParam(Quik.DefaultPort, Quik.DefaultHost, "SiH1", QuikSharp.DataStructures.CandleInterval.M1, param);
             }
             catch
             {
@@ -89,6 +79,9 @@ namespace TradingRobotsServer.ViewModels
             //param = "15;5;2;10,39,0;18,30,0;true;false";
             //robotGZH1.Run(Quik.DefaultPort, Quik.DefaultHost, "GZH1", QuikSharp.DataStructures.CandleInterval.M1, param);
 
+
+
+
         }
 
         private bool Can_LogCommand_Execute(object obj)
@@ -97,6 +90,7 @@ namespace TradingRobotsServer.ViewModels
         }
         private void On_LogCommand_Execute(object obj)
         {
+            Logs.LogExcel(tabStrategyViewModel.Robot.Strategy.Deals);
         }
 
 
@@ -105,7 +99,8 @@ namespace TradingRobotsServer.ViewModels
 
     public class UserTabControl
     {
+        public int ID { get; set; }
         public string Header { get; set; }
-
+        public TabStrategy Tab { get; set; }
     }
 }

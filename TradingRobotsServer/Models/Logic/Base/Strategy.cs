@@ -14,10 +14,8 @@ namespace TradingRobotsServer.Models.Logic.Base
     {
         public abstract Bot Bot { get; set; }
 
-        public delegate void OnNewOrder(Deal deal, Command command);
+        public delegate void OnNewOrder(OrderInfo order);
         public abstract event OnNewOrder NewOrder;
-
-        public abstract List<Deal> Deals { get; set; }
 
         public abstract void SubsribeNewDeal();
 
@@ -29,14 +27,14 @@ namespace TradingRobotsServer.Models.Logic.Base
         /// </summary>
         /// <param name="deal"></param>
         /// <returns></returns>
-        public abstract List<OrderInfo> PlacingStopLimitOrder(Deal deal);
+        public abstract OrderInfo PlacingStopLimitOrder(Deal deal);
 
         /// <summary>
         /// Отправка тейк-профитов.
         /// </summary>
         /// <param name="deal"></param>
         /// <returns></returns>
-        public abstract List<OrderInfo> PlacingTakeProfitOrder(Deal deal);
+        public abstract OrderInfo PlacingTakeProfitOrder(Deal deal);
 
         /// <summary>
         /// Пересчет стоп-лимитов.
@@ -52,7 +50,7 @@ namespace TradingRobotsServer.Models.Logic.Base
         /// <returns></returns>
         public abstract OrderInfo RecalculateTakeProfit(Deal deal);
 
-        public abstract bool ProcessingExecutedOrders(Order order);
+        public abstract bool ProcessingExecutedOrders(Trade trade);
         public abstract bool ProcessingExecutedStopOrders(StopOrder stoporder);
     }
 }

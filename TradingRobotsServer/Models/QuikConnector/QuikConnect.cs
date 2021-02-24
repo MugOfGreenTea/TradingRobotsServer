@@ -769,8 +769,6 @@ namespace TradingRobotsServer.Models.QuikConnector
                 order.Condition = Condition.LessOrEqual;
             else
                 order.Condition = Condition.MoreOrEqual;
-
-            Logs.DebugLog("Выставляем стоп-лимит, по цене: " + price + "...", LogType.Info);
             return await quik.StopOrders.SendStopOrders(order).ConfigureAwait(false);
         }
 

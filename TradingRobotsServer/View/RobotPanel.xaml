@@ -1,28 +1,30 @@
-﻿<Window x:Class="TradingRobotsServer.RobotPanel"
+﻿<Window
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TradingRobotsServer"
         xmlns:vm="clr-namespace:TradingRobotsServer.ViewModels"
+        xmlns:View="clr-namespace:TradingRobotsServer.View" x:Class="TradingRobotsServer.RobotPanel"
         mc:Ignorable="d"
-        Title="Profit Taker 3000" Height="700" Width="1450">
+        Title="Profit Taker 3000" Height="778.5" Width="1466.5" MinHeight="753" MinWidth="1450">
     <Window.DataContext>
         <vm:RobotPanelViewModel/>
     </Window.DataContext>
     <Grid>
         <Menu Height="23" VerticalAlignment="Top" Grid.ColumnSpan="2">
-            <MenuItem Header="File">
-                <MenuItem Header="Создать" Command="{Binding Button1}"></MenuItem>
-                <MenuItem Header="Log" Command="{Binding LogCommand}"/>
+            <MenuItem Header="Файл">
+                <MenuItem Header="Создать" Command="{Binding CreateTab}"/>
+                <MenuItem Header="Лог" Command="{Binding LogCommand}"/>
                 <MenuItem Header="Настройки"/>
                 <Separator />
-                <MenuItem Header="Выход" ></MenuItem>
+                <MenuItem Header="Выход" />
             </MenuItem>
-            <MenuItem Header="Edit" ></MenuItem>
-            <MenuItem Header="View" ></MenuItem>
+            <MenuItem Header="Edit" />
+            <MenuItem Header="View" />
         </Menu>
-        <TabControl ItemsSource="{Binding Tabs}" Margin="0,23,0,0">
+        <View:TabStrategy Margin="0,23,0,0" DataContext="{Binding tabStrategyViewModel}"/>
+        <!--<TabControl ItemsSource="{Binding Tabs}" Margin="0,23,0,0">
             <TabControl.ItemTemplate>
                 <DataTemplate>
                     <TextBlock Text="{Binding Header}" />
@@ -30,10 +32,10 @@
             </TabControl.ItemTemplate>
             <TabControl.ContentTemplate>
                 <DataTemplate>
-                    <!--<TabStrategy xmlns="clr-namespace:TradingRobotsServer.View"/>-->
+                    <TabStrategy xmlns="clr-namespace:TradingRobotsServer.View"/>
                 </DataTemplate>
             </TabControl.ContentTemplate>
-        </TabControl>
+        </TabControl>-->
 
     </Grid>
 </Window>
