@@ -69,7 +69,7 @@ namespace TradingRobotsServer.ViewModels
             }
             catch
             {
-                Logs.LogExcel(robotSRH1.Strategy.Deals);
+                //Logs.LogExcel(robotSRH1.Strategy.Deals);
             }
             //TradingRobot robotVBH1 = new TradingRobot();
             // param = "15;5;2;10,39,0;18,30,0;true;false";
@@ -90,7 +90,7 @@ namespace TradingRobotsServer.ViewModels
         }
         private void On_LogCommand_Execute(object obj)
         {
-            Logs.LogExcel(tabStrategyViewModel.Robot.Strategy.Deals);
+            //Logs.LogExcel(tabStrategyViewModel.Robot.Strategy.Deals);
         }
 
 

@@ -101,8 +101,15 @@ namespace TradingRobotsServer.Models.Logic
 
         #region Обработка свеч
 
+        bool t = true;
         public override void AnalysisCandle(Candle candle)
         {
+            if(t)
+            {
+                PlacingOrdersTemp(candle);
+                t = false;
+            }
+
             if (Candles.Count != 0 && Candles.Count >= Window * CandlesViewed)
                 Candles.RemoveAt(0);
             Candles.Add(candle);
@@ -110,7 +117,7 @@ namespace TradingRobotsServer.Models.Logic
             bool check = FindExtremums();
             //if (check)
             {
-                if (/*DateTime.Now.Minute % 5 == 0 &&*/ !lock_tick_long)
+                if (DateTime.Now.Minute % 15 == 0 && !lock_tick_long)
                 {
                     lock_tick_long = true;
                     lock (lock_object)
@@ -600,44 +607,6 @@ namespace TradingRobotsServer.Models.Logic
 
         private bool ProcessingExecutedOrders_OrderInfo(Trade trade, int i)
         {
-            {
-                //if (trade..OrderNum == Deals[i].EntryOrder.IDOrder && order.State == State.Completed && Deals[i]EntryOrder.ExecutionStatus == State.Active)
-                //{
-                //    Deals[i]EntryOrder.ExecutionStatus = State.Completed;
-                //    Deals[i].Vol = Deals[i]EntryOrder.Vol;
-                //    Deals[i].Status = StatusDeal.Open;
-                //    Deals[i].TradeEntryPoint = new TrendDataPoint(Candles.Count, order.Price, new DateTime(order.Datetime.year, order.Datetime.month, order.Datetime.day, order.Datetime.hour, order.Datetime.min, order.Datetime.sec));
-
-                //    Deals[i].StopLimitOrdersInfo.AddRange(PlacingStopLimitOrder(Deals[i]));
-                //    Deals[i].TakeProfitOrdersInfo.AddRange(PlacingTakeProfitOrder(Deals[i]));
-
-                //    NewOrder?.Invoke(Deals[i], Command.SendStopLimitOrder);
-                //    NewOrder?.Invoke(Deals[i], Command.SendTakeProfitOrder);
-
-                //    Debug.WriteLine("Вошли в сделку №" + i);
-                //    Deals[i].LogDeal("вход: " + order.Datetime.ToString());
-                //    return true;
-                //}
-
-                //if (order.OrderNum == Deals[i].OrdersInfo[j].IDLinkedOrder && order.State == State.Completed && Deals[i].OrdersInfo[j].ExecutionLinkedStatus == State.Active)
-                //{
-                //    Deals[i].OrdersInfo[j].ExecutionLinkedStatus = State.Completed;
-                //    Deals[i].Vol = Deals[i].OrdersInfo[j].Vol;
-                //    Deals[i].Status = StatusDeal.Open;
-                //    Deals[i].TradeEntryPoint = new TrendDataPoint(Candles.Count, order.Price, new DateTime(order.Datetime.year, order.Datetime.month, order.Datetime.day, order.Datetime.hour, order.Datetime.min, order.Datetime.sec));
-
-                //    Deals[i].StopLimitOrdersInfo.AddRange(PlacingStopLimitOrder(Deals[i]));
-                //    Deals[i].TakeProfitOrdersInfo.AddRange(PlacingTakeProfitOrder(Deals[i]));
-
-                //    NewOrder?.Invoke(Deals[i], Command.SendStopLimitOrder);
-                //    NewOrder?.Invoke(Deals[i], Command.SendTakeProfitOrder);
-
-                //    Debug.WriteLine("Вошли в сделку №" + i);
-                //    Deals[i].LogDeal("вход: " + order.Datetime.ToString());
-                //    return true;
-                //}
-            }
-
             if (trade.OrderNum == Deals[i].EntryOrder.IDLinkedOrder && Deals[i].EntryOrder.ExecutionStatus == State.Active)
             {
                 Deals[i].EntryOrder.ExecutionStatus = State.Completed;
@@ -660,7 +629,6 @@ namespace TradingRobotsServer.Models.Logic
         {
             if (trade.OrderNum == Deals[i].FirstStopLossOrder.IDLinkedOrder)
             {
-                Deals[i].FirstStopLossOrder.ExecutionStatus = State.Completed;
                 Deals[i].Status = StatusDeal.Closed;
 
                 if (Deals[i].FirstTakeProfitOrder.ExecutionStatus != State.Canceled)
@@ -680,7 +648,6 @@ namespace TradingRobotsServer.Models.Logic
 
             if (trade.OrderNum == Deals[i].SecondStopLossOrder.IDLinkedOrder)
             {
-                Deals[i].FirstStopLossOrder.ExecutionStatus = State.Completed;
                 Deals[i].Status = StatusDeal.Closed;
 
                 if (Deals[i].SecondTakeProfitOrder.ExecutionStatus != State.Canceled)
@@ -700,7 +667,6 @@ namespace TradingRobotsServer.Models.Logic
 
             if (trade.OrderNum == Deals[i].ThirdStopLossOrder.IDLinkedOrder)
             {
-                Deals[i].FirstStopLossOrder.ExecutionStatus = State.Completed;
                 Deals[i].Status = StatusDeal.Closed;
 
                 if (Deals[i].ThirdTakeProfitOrder.ExecutionStatus != State.Canceled)
@@ -723,40 +689,6 @@ namespace TradingRobotsServer.Models.Logic
 
         private bool ProcessingExecutedOrders_TakeProfitOrdersInfo(Trade trade, int i)
         {
-            //for (int j = 0; j < Deals[i].TakeProfitOrdersInfo.Count; j++)
-            //{
-            //    if (order.OrderNum == Deals[i].TakeProfitOrdersInfo[j].IDLinkedOrder && order.State == State.Completed && Deals[i].TakeProfitOrdersInfo[j].ExecutionLinkedStatus == State.Active && Deals[i].Status == StatusDeal.Open)
-            //    {
-            //        Deals[i].TakeProfitOrdersInfo[j].ExecutionLinkedStatus = State.Completed;
-
-            //        Deals[i].Vol -= Deals[i].TakeProfitOrdersInfo[j].Vol;
-
-            //        for (int k = 0; k < Deals[i].StopLimitOrdersInfo.Count; k++)
-            //        {
-            //            if (Deals[i].StopLimitOrdersInfo[k].ExecutionStatus != State.Canceled)
-            //                Deals[i].StopLimitOrdersInfo[k].ExecutionStatus = State.Canceled;
-            //        }
-
-            //        if (Deals[i].Vol == 0)
-            //        {
-            //            Deals[i].Status = StatusDeal.Closed;
-            //            NewOrder(Deals[i], Command.TakeOffStopLimitOrder);
-            //            return true;
-            //        }
-
-            //        Deals[i].StopLimitOrdersInfo.Add(RecalculateStopLimit(Deals[i]));
-            //        Deals[i].TakeProfitOrdersInfo.Add(RecalculateTakeProfit(Deals[i]));
-
-            //        NewOrder(Deals[i], Command.SendTakeProfitOrder);
-            //        NewOrder(Deals[i], Command.SendStopLimitOrder);
-            //        NewOrder(Deals[i], Command.TakeOffStopLimitOrder);
-
-            //        Debug.WriteLine("Достигли тейк-профита в сделке №" + i);
-            //        Deals[i].LogDeal("тейк-профит: " + order.Datetime.ToString());
-            //        return true;
-            //    }
-            //}
-
             if(trade.OrderNum == Deals[i].FirstTakeProfitOrder.IDLinkedOrder && Deals[i].Status == StatusDeal.Open)
             {
                 Deals[i].Vol -= Deals[i].FirstTakeProfitOrder.Vol;
@@ -946,12 +878,12 @@ namespace TradingRobotsServer.Models.Logic
         // Пересчет тейк-профитов.
         public override OrderInfo RecalculateTakeProfit(Deal deal)
         {
-            if (((DealHighLow)deal).SecondTakeProfitOrder == null && ((DealHighLow)deal).FirstTakeProfitOrder.ExecutionStatus == State.Canceled)
+            if (((DealHighLow)deal).SecondTakeProfitOrder == null && ((DealHighLow)deal).FirstTakeProfitOrder.ExecutionStatus == State.Completed)
             {
                 //decimal profit = CalculationTakeProfits(deal.OrdersInfo[0].Price, deal.StopLoss, deal.Operation, 2m);
                 return new OrderInfo(deal.ID, TypeOrder.TakeProfit, Command.SendTakeProfitOrder, ((DealHighLow)deal).EntryOrder.Price + (20m * Bot.Tool.Step), -1, ReverseOperation(deal.Operation), "n" + deal.ID + "/TakeProfit" + 1);
             }
-            if (((DealHighLow)deal).ThirdTakeProfitOrder == null && ((DealHighLow)deal).SecondTakeProfitOrder.ExecutionStatus == State.Canceled)
+            if (((DealHighLow)deal).ThirdTakeProfitOrder == null && ((DealHighLow)deal).SecondTakeProfitOrder.ExecutionStatus == State.Completed)
             {
                 //decimal profit = CalculationTakeProfits(deal.OrdersInfo[0].Price, deal.StopLoss, deal.Operation, 3m);
                 return new OrderInfo(deal.ID, TypeOrder.TakeProfit, Command.SendTakeProfitOrder, ((DealHighLow)deal).EntryOrder.Price + (40m * Bot.Tool.Step), deal.Vol, ReverseOperation(deal.Operation), "n" + deal.ID + "/TakeProfit" + 2);

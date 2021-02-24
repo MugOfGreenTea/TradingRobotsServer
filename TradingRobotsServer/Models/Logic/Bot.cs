@@ -186,10 +186,16 @@ namespace TradingRobotsServer.Models.Logic
         /// <param name="tick"></param>
         private async void OnTrade(Trade trade)
         {
+            Debug.WriteLine("! Comment: " + trade.Comment + ", OrderNum: " + trade.OrderNum);
             if (trade.Account == Tool.AccountID && trade.SecCode == Tool.SecurityCode)
             {
                 await Task.Delay(20);
                 bool check = Strategy.ProcessingExecutedOrders(trade);
+                if (!check)
+                {
+                    PoolOrders.Add(new OrderInPool(trade));
+                    Debug.WriteLine("OnOrder попал в Pool");
+                }
             }
         }
 
@@ -214,17 +220,7 @@ namespace TradingRobotsServer.Models.Logic
         /// <param name="tick"></param>
         private async void OnOrder(Order order)
         {
-            Debug.WriteLine("! Comment: " + order.Comment + ", OrderNum: " + order.OrderNum + ", State: " + order.State);
-            if (order.Account == Tool.AccountID && order.SecCode == Tool.SecurityCode && order.State == State.Completed)
-            {
-                await Task.Delay(20);
-                bool check = Strategy.ProcessingExecutedOrders(order);
-                if (!check)
-                {
-                    PoolOrders.Add(new OrderInPool(order));
-                    Debug.WriteLine("OnOrder попал в Pool");
-                }
-            }
+
         }
 
         private long temp_id_stoporder = -1;
@@ -254,9 +250,9 @@ namespace TradingRobotsServer.Models.Logic
         {
             for (int i = 0; i < PoolOrders.Count; i++)
             {
-                if (PoolOrders[i].Order is Order)
+                if (PoolOrders[i].Order is Trade)
                 {
-                    bool check_execution = Strategy.ProcessingExecutedOrders((Order)PoolOrders[i].Order);
+                    bool check_execution = Strategy.ProcessingExecutedOrders((Trade)PoolOrders[i].Order);
                     if (check_execution)
                         PoolOrders[i].Distribution = check_execution;
                 }

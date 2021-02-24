@@ -60,35 +60,35 @@ namespace TradingRobotsServer.Models.Structures
                 if (deal.TradeEntryPoint != null)
                     ws.Cell("c" + (number_string)).Value = deal.TradeEntryPoint.DateTime; // время входа
 
-                if (deal.TakeProfitOrdersInfo.Count > 0)
-                    ws.Cell("D" + (number_string)).Value = deal.TakeProfitOrdersInfo[0].ExecutionLinkedStatus; // 1 тейк-профит
-                else
-                    ws.Cell("D" + (number_string)).Value = "Null"; // 1 тейк-профит
+                //if (deal.TakeProfitOrdersInfo.Count > 0)
+                //    ws.Cell("D" + (number_string)).Value = deal.TakeProfitOrdersInfo[0].ExecutionLinkedStatus; // 1 тейк-профит
+                //else
+                //    ws.Cell("D" + (number_string)).Value = "Null"; // 1 тейк-профит
 
-                if (deal.StopLimitOrdersInfo.Count > 0)
-                    ws.Cell("E" + (number_string)).Value = deal.StopLimitOrdersInfo[0].ExecutionLinkedStatus; // 1 стоплосс
-                else
-                    ws.Cell("E" + (number_string)).Value = "Null";
+                //if (deal.StopLimitOrdersInfo.Count > 0)
+                //    ws.Cell("E" + (number_string)).Value = deal.StopLimitOrdersInfo[0].ExecutionLinkedStatus; // 1 стоплосс
+                //else
+                //    ws.Cell("E" + (number_string)).Value = "Null";
 
-                if (deal.TakeProfitOrdersInfo.Count > 1)
-                    ws.Cell("F" + (number_string)).Value = deal.TakeProfitOrdersInfo[1].ExecutionLinkedStatus; // 2 тейк-профит
-                else
-                    ws.Cell("F" + (number_string)).Value = "Null";
+                //if (deal.TakeProfitOrdersInfo.Count > 1)
+                //    ws.Cell("F" + (number_string)).Value = deal.TakeProfitOrdersInfo[1].ExecutionLinkedStatus; // 2 тейк-профит
+                //else
+                //    ws.Cell("F" + (number_string)).Value = "Null";
 
-                if (deal.StopLimitOrdersInfo.Count > 1)
-                    ws.Cell("G" + (number_string)).Value = deal.StopLimitOrdersInfo[1].ExecutionLinkedStatus; // 2 стоплосс
-                else
-                    ws.Cell("G" + (number_string)).Value = "Null";
+                //if (deal.StopLimitOrdersInfo.Count > 1)
+                //    ws.Cell("G" + (number_string)).Value = deal.StopLimitOrdersInfo[1].ExecutionLinkedStatus; // 2 стоплосс
+                //else
+                //    ws.Cell("G" + (number_string)).Value = "Null";
 
-                if (deal.TakeProfitOrdersInfo.Count > 2)
-                    ws.Cell("H" + (number_string)).Value = deal.TakeProfitOrdersInfo[2].ExecutionLinkedStatus; // 3 тейк-профит
-                else
-                    ws.Cell("H" + (number_string)).Value = "Null";
+                //if (deal.TakeProfitOrdersInfo.Count > 2)
+                //    ws.Cell("H" + (number_string)).Value = deal.TakeProfitOrdersInfo[2].ExecutionLinkedStatus; // 3 тейк-профит
+                //else
+                //    ws.Cell("H" + (number_string)).Value = "Null";
 
-                if (deal.StopLimitOrdersInfo.Count > 2)
-                    ws.Cell("I" + (number_string)).Value = deal.StopLimitOrdersInfo[2].ExecutionLinkedStatus; // 3 стоплосс
-                else
-                    ws.Cell("I" + (number_string)).Value = "Null";
+                //if (deal.StopLimitOrdersInfo.Count > 2)
+                //    ws.Cell("I" + (number_string)).Value = deal.StopLimitOrdersInfo[2].ExecutionLinkedStatus; // 3 стоплосс
+                //else
+                //    ws.Cell("I" + (number_string)).Value = "Null";
 
                 if (deal.ExitPoint != null)
                     ws.Cell("J" + (number_string)).Value = deal.ExitPoint.DateTime; // время выхода
