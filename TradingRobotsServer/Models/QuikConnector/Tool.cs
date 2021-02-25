@@ -227,6 +227,13 @@ namespace TradingRobotsServer.Models.QuikConnector
             set => status_clearing = Convert.ToDecimal(value);
         }
 
+        private int position;
+        public int Position
+        {
+            get => position = Convert.ToInt32(quik.Trading.GetParamEx(classCode, securityCode, ParamNames.NUMCONTRACTS).Result.ParamValue.Replace('.', separator));
+            set => position = value;
+        }
+
         public bool ToolCreated = false;
         public bool isSubscribedToolOrderBook = false;
         public bool isSubscribedToolCandles = false;

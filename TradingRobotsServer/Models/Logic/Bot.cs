@@ -86,6 +86,7 @@ namespace TradingRobotsServer.Models.Logic
                 DebugLog("Подписка на получение информации о новой сделке не удалась.");
                 return false;
             }
+
         }
 
         /// <summary>
@@ -180,16 +181,18 @@ namespace TradingRobotsServer.Models.Logic
 
         #region Обработка событий от Quik
 
+        private long temp_id_order = -1;
         /// <summary>
         /// Обработчик события получение информации о новой сделке.
         /// </summary>
         /// <param name="tick"></param>
-        private async void OnTrade(Trade trade)
+        private void OnTrade(Trade trade)
         {
             Debug.WriteLine("! Comment: " + trade.Comment + ", OrderNum: " + trade.OrderNum);
-            if (trade.Account == Tool.AccountID && trade.SecCode == Tool.SecurityCode)
+            if (trade.Account == Tool.AccountID && trade.SecCode == Tool.SecurityCode && temp_id_order != trade.OrderNum)
             {
-                await Task.Delay(20);
+                temp_id_order = trade.OrderNum;
+
                 bool check = Strategy.ProcessingExecutedOrders(trade);
                 if (!check)
                 {
@@ -213,7 +216,6 @@ namespace TradingRobotsServer.Models.Logic
             }
         }
 
-        private long temp_id_order = -1;
         /// <summary>
         /// Обработчик события получение информации о новой заявке или изменения выставенной заявки.
         /// </summary>

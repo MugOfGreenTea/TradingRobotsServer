@@ -16,6 +16,10 @@ namespace TradingRobotsServer.Models.Structures
         /// Статус исполнения.
         /// </summary>
         public State ExecutionStatus;
+        /// <summary>
+        /// Статус исполнения связанной заявки.
+        /// </summary>
+        public State ExecutionLinkedStatus;
         public long IDOrder;
         public long IDLinkedOrder;
         public string Comment;
